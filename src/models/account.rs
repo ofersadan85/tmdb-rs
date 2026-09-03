@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+
 #[derive(Debug, PartialEq, Eq, Deserialize, Serialize)]
 pub struct Gravatar {
     pub hash: String,

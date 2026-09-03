@@ -1,8 +1,8 @@
 use reqwest::header::{AUTHORIZATION, HeaderMap, HeaderValue};
+use serde::de::DeserializeOwned;
 
 mod models;
-use models::search::{ExternalSourceId, FindResponse, SearchResults, Searchable};
-use serde::de::DeserializeOwned;
+use models::{ExternalSourceId, FindResponse, SearchResults, Searchable};
 
 /// Error type for TMDB client operations.
 #[derive(Debug, thiserror::Error)]
@@ -122,126 +122,5 @@ impl TmdbClient {
         T: Searchable + DeserializeOwned + Send,
     {
         T::search_simple(self, &self.base_url, query.into()).await
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::models::collections::Collection;
-    use crate::models::companies::Company;
-    use crate::models::keywords::Keyword;
-    use crate::models::movies::Movie;
-    use crate::models::people::Person;
-    use crate::models::search::*;
-    use crate::models::tv::Tv;
-
-    #[tokio::test]
-    async fn external_id() {
-        dotenvy::dotenv().ok();
-        let response = TmdbClient::from_env("TMDB_TOKEN")
-            .unwrap()
-            .find_by_external_id("tt33764258", ExternalSourceId::Imdb, None)
-            .await
-            .unwrap();
-        assert!(!response.movies.is_empty(), "{response:#?}");
-        assert_eq!(response.movies[0].title, "The Odyssey");
-    }
-
-    #[tokio::test]
-    async fn search_movie() {
-        dotenvy::dotenv().ok();
-        let response = TmdbClient::from_env("TMDB_TOKEN")
-            .unwrap()
-            .search_simple::<Movie>("Inception")
-            .await
-            .unwrap();
-
-        assert!(!response.results.is_empty(), "{response:#?}");
-        assert_eq!(response.results[0].id, 27205);
-        assert_eq!(response.results[0].title, "Inception");
-    }
-
-    #[tokio::test]
-    async fn search_tv() {
-        dotenvy::dotenv().ok();
-        let response = TmdbClient::from_env("TMDB_TOKEN")
-            .unwrap()
-            .search_simple::<Tv>("Game of Thrones")
-            .await
-            .unwrap();
-
-        assert!(!response.results.is_empty(), "{response:#?}");
-        assert_eq!(response.results[0].id, 1399);
-        assert_eq!(response.results[0].name, "Game of Thrones");
-    }
-
-    #[tokio::test]
-    async fn search_person() {
-        dotenvy::dotenv().ok();
-        let response = TmdbClient::from_env("TMDB_TOKEN")
-            .unwrap()
-            .search_simple::<Person>("Keanu Reeves")
-            .await
-            .unwrap();
-
-        assert!(!response.results.is_empty(), "{response:#?}");
-        assert_eq!(response.results[0].id, 6384);
-        assert_eq!(response.results[0].name, "Keanu Reeves");
-    }
-
-    #[tokio::test]
-    async fn search_collection() {
-        dotenvy::dotenv().ok();
-        let response = TmdbClient::from_env("TMDB_TOKEN")
-            .unwrap()
-            .search_simple::<Collection>("Star Wars")
-            .await
-            .unwrap();
-
-        assert!(!response.results.is_empty(), "{response:#?}");
-        assert_eq!(response.results[0].id, 10);
-        assert_eq!(response.results[0].name, "Star Wars Collection");
-    }
-
-    #[tokio::test]
-    async fn search_company() {
-        dotenvy::dotenv().ok();
-        let response = TmdbClient::from_env("TMDB_TOKEN")
-            .unwrap()
-            .search_simple::<Company>("Pixar")
-            .await
-            .unwrap();
-
-        assert!(!response.results.is_empty(), "{response:#?}");
-        assert_eq!(response.results[0].id, 3);
-        assert_eq!(response.results[0].name, "Pixar");
-    }
-
-    #[tokio::test]
-    async fn search_keyword() {
-        dotenvy::dotenv().ok();
-        let response = TmdbClient::from_env("TMDB_TOKEN")
-            .unwrap()
-            .search_simple::<Keyword>("space")
-            .await
-            .unwrap();
-
-        assert!(!response.results.is_empty(), "{response:#?}");
-        assert_eq!(response.results[0].id, 9882);
-        assert_eq!(response.results[0].name, "space");
-    }
-
-    #[tokio::test]
-    async fn search_multi() {
-        dotenvy::dotenv().ok();
-        let response = TmdbClient::from_env("TMDB_TOKEN")
-            .unwrap()
-            .search_simple::<MultiSearch>("Avatar")
-            .await
-            .unwrap();
-
-        assert!(!response.results.is_empty(), "{response:#?}");
-        assert_ne!(response.total_pages, 1);
     }
 }

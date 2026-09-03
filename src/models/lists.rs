@@ -1,13 +1,15 @@
 use serde::{Deserialize, Serialize};
 
 /// List metadata returned by the Lists chapter.
-#[derive(Debug, PartialEq, Eq, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct ListInfo {
-    pub id: String,
-    pub name: String,
+    pub created_by: String,
     pub description: String,
     pub favorite_count: u64,
+    pub id: String,
+    pub items: Vec<super::search::MultiSearch>,
     pub item_count: u64,
     pub iso_639_1: String,
-    pub list_type: String,
+    pub name: String,
+    pub poster_path: Option<String>,
 }

@@ -1,11 +1,4 @@
-use super::{
-    collections::Collection,
-    companies::Company,
-    keywords::Keyword,
-    movies::Movie,
-    people::Person,
-    tv::{Episode, Season, Tv},
-};
+use super::{Collection, Company, Episode, Keyword, Movie, Person, Season, Tv};
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 
 /// Search query parameters used across several TMDB search endpoints.
@@ -246,7 +239,7 @@ where
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 #[serde(tag = "media_type", rename_all = "snake_case")]
 #[expect(clippy::large_enum_variant)]
 pub enum MultiSearch {
@@ -293,4 +286,100 @@ pub struct FindResponse {
     pub(crate) episodes: Vec<Episode>,
     #[serde(rename = "tv_season_results")]
     pub(crate) seasons: Vec<Season>,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::TmdbClient;
+
+    fn client() -> TmdbClient {
+        dotenvy::dotenv().ok();
+        TmdbClient::from_env("TMDB_TOKEN").unwrap()
+    }
+
+    #[tokio::test]
+    async fn external_id() {
+        let response = client()
+            .find_by_external_id("tt33764258", ExternalSourceId::Imdb, None)
+            .await
+            .unwrap();
+        assert!(!response.movies.is_empty(), "{response:#?}");
+        assert_eq!(response.movies[0].title, "The Odyssey");
+    }
+
+    #[tokio::test]
+    async fn movie() {
+        let response = client().search_simple::<Movie>("Inception").await.unwrap();
+
+        assert!(!response.results.is_empty(), "{response:#?}");
+        assert_eq!(response.results[0].id, 27205);
+        assert_eq!(response.results[0].title, "Inception");
+    }
+
+    #[tokio::test]
+    async fn tv() {
+        dotenvy::dotenv().ok();
+        let response = client()
+            .search_simple::<Tv>("Game of Thrones")
+            .await
+            .unwrap();
+
+        assert!(!response.results.is_empty(), "{response:#?}");
+        assert_eq!(response.results[0].id, 1399);
+        assert_eq!(response.results[0].name, "Game of Thrones");
+    }
+
+    #[tokio::test]
+    async fn person() {
+        let response = client()
+            .search_simple::<Person>("Keanu Reeves")
+            .await
+            .unwrap();
+
+        assert!(!response.results.is_empty(), "{response:#?}");
+        assert_eq!(response.results[0].id, 6384);
+        assert_eq!(response.results[0].name, "Keanu Reeves");
+    }
+
+    #[tokio::test]
+    async fn collection() {
+        let response = client()
+            .search_simple::<Collection>("Star Wars")
+            .await
+            .unwrap();
+
+        assert!(!response.results.is_empty(), "{response:#?}");
+        assert_eq!(response.results[0].id, 10);
+        assert_eq!(response.results[0].name, "Star Wars Collection");
+    }
+
+    #[tokio::test]
+    async fn company() {
+        let response = client().search_simple::<Company>("Pixar").await.unwrap();
+
+        assert!(!response.results.is_empty(), "{response:#?}");
+        assert_eq!(response.results[0].id, 3);
+        assert_eq!(response.results[0].name, "Pixar");
+    }
+
+    #[tokio::test]
+    async fn keyword() {
+        let response = client().search_simple::<Keyword>("space").await.unwrap();
+
+        assert!(!response.results.is_empty(), "{response:#?}");
+        assert_eq!(response.results[0].id, 9882);
+        assert_eq!(response.results[0].name, "space");
+    }
+
+    #[tokio::test]
+    async fn multi() {
+        let response = client()
+            .search_simple::<MultiSearch>("Avatar")
+            .await
+            .unwrap();
+
+        assert!(!response.results.is_empty(), "{response:#?}");
+        assert_ne!(response.total_pages, 1);
+    }
 }
