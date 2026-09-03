@@ -1,7 +1,8 @@
 use reqwest::header::{AUTHORIZATION, HeaderMap, HeaderValue};
 
 mod models;
-use models::search::{ExternalSourceId, FindResponse, SearchQuery, SearchResults};
+use models::search::{ExternalSourceId, FindResponse, SearchResults, Searchable};
+use serde::de::DeserializeOwned;
 
 /// Error type for TMDB client operations.
 #[derive(Debug, thiserror::Error)]
@@ -24,17 +25,25 @@ pub struct TmdbClient {
 impl TmdbClient {
     /// Creates a new TMDB client instance.
     ///
-    /// This function reads the TMDB API token from the environment variable `TMDB_TOKEN`
+    /// This function reads the TMDB API token from the specified environment variable
     /// and initializes the client with the necessary authorization headers.
     ///
     /// # Errors
     ///
     /// Returns an [`Error`] if the client initialization fails for one of the following:
-    /// - Failure to read the `TMDB_TOKEN` environment variable.
+    /// - Failure to read the specified environment variable.
     /// - Invalid header value for the authorization header.
-    pub fn new() -> Result<Self, Error> {
-        dotenvy::dotenv().ok();
-        let bearer = format!("Bearer {}", std::env::var("TMDB_TOKEN")?);
+    pub fn from_env(env: &str) -> Result<Self, Error> {
+        Self::from_token(&std::env::var(env)?)
+    }
+
+    /// Creates a new TMDB client instance.
+    ///
+    /// # Errors
+    ///
+    /// Returns an [`Error`] if the token is invalid as header value for the authorization header.
+    pub fn from_token(token: &str) -> Result<Self, Error> {
+        let bearer = format!("Bearer {token}");
         let mut bearer = HeaderValue::from_str(&bearer)?;
         bearer.set_sensitive(true);
         let mut headers = HeaderMap::new();
@@ -88,30 +97,49 @@ impl TmdbClient {
     ///
     /// Returns [`reqwest::Error`] if the request to the TMDB API fails
     /// or if the response cannot be deserialized.
-    pub async fn search(
+    pub async fn search<T>(
         &self,
-        params: impl Into<SearchQuery<'_>>,
-    ) -> Result<SearchResults, reqwest::Error> {
-        let params = params.into();
-        self.client
-            .get(format!("{}/{}", self.base_url, params.uri()))
-            .query(&params)
-            .send()
-            .await?
-            .error_for_status()?
-            .json()
-            .await
+        params: T::Query,
+    ) -> Result<SearchResults<T, T::Query>, reqwest::Error>
+    where
+        T: Searchable + DeserializeOwned + Send,
+    {
+        T::search(self, &self.base_url, params).await
+    }
+
+    /// Searches for items using a simple query string.
+    /// Returns a [`SearchResults`] containing the search results.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`reqwest::Error`] if the request to the TMDB API fails
+    /// or if the response cannot be deserialized.
+    pub async fn search_simple<T>(
+        &self,
+        query: impl Into<String>,
+    ) -> Result<SearchResults<T, T::Query>, reqwest::Error>
+    where
+        T: Searchable + DeserializeOwned + Send,
+    {
+        T::search_simple(self, &self.base_url, query.into()).await
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::models::collections::Collection;
+    use crate::models::companies::Company;
+    use crate::models::keywords::Keyword;
+    use crate::models::movies::Movie;
+    use crate::models::people::Person;
     use crate::models::search::*;
+    use crate::models::tv::Tv;
 
     #[tokio::test]
     async fn external_id() {
-        let response = TmdbClient::new()
+        dotenvy::dotenv().ok();
+        let response = TmdbClient::from_env("TMDB_TOKEN")
             .unwrap()
             .find_by_external_id("tt33764258", ExternalSourceId::Imdb, None)
             .await
@@ -122,78 +150,98 @@ mod tests {
 
     #[tokio::test]
     async fn search_movie() {
-        let response = TmdbClient::new()
+        dotenvy::dotenv().ok();
+        let response = TmdbClient::from_env("TMDB_TOKEN")
             .unwrap()
-            .search(SearchQuery::simple_movie("Inception"))
+            .search_simple::<Movie>("Inception")
             .await
             .unwrap();
 
         assert!(!response.results.is_empty(), "{response:#?}");
+        assert_eq!(response.results[0].id, 27205);
+        assert_eq!(response.results[0].title, "Inception");
     }
 
     #[tokio::test]
     async fn search_tv() {
-        let response = TmdbClient::new()
+        dotenvy::dotenv().ok();
+        let response = TmdbClient::from_env("TMDB_TOKEN")
             .unwrap()
-            .search(SearchQuery::simple_tv("Dark"))
+            .search_simple::<Tv>("Game of Thrones")
             .await
             .unwrap();
 
         assert!(!response.results.is_empty(), "{response:#?}");
+        assert_eq!(response.results[0].id, 1399);
+        assert_eq!(response.results[0].name, "Game of Thrones");
     }
 
     #[tokio::test]
     async fn search_person() {
-        let response = TmdbClient::new()
+        dotenvy::dotenv().ok();
+        let response = TmdbClient::from_env("TMDB_TOKEN")
             .unwrap()
-            .search(SearchQuery::simple_person("Keanu Reeves"))
+            .search_simple::<Person>("Keanu Reeves")
             .await
             .unwrap();
 
         assert!(!response.results.is_empty(), "{response:#?}");
+        assert_eq!(response.results[0].id, 6384);
+        assert_eq!(response.results[0].name, "Keanu Reeves");
     }
 
     #[tokio::test]
     async fn search_collection() {
-        let response = TmdbClient::new()
+        dotenvy::dotenv().ok();
+        let response = TmdbClient::from_env("TMDB_TOKEN")
             .unwrap()
-            .search(SearchQuery::simple_collection("Star Wars"))
+            .search_simple::<Collection>("Star Wars")
             .await
             .unwrap();
 
         assert!(!response.results.is_empty(), "{response:#?}");
+        assert_eq!(response.results[0].id, 10);
+        assert_eq!(response.results[0].name, "Star Wars Collection");
     }
 
     #[tokio::test]
     async fn search_company() {
-        let response = TmdbClient::new()
+        dotenvy::dotenv().ok();
+        let response = TmdbClient::from_env("TMDB_TOKEN")
             .unwrap()
-            .search(SearchQuery::simple_company("Pixar"))
+            .search_simple::<Company>("Pixar")
             .await
             .unwrap();
 
         assert!(!response.results.is_empty(), "{response:#?}");
+        assert_eq!(response.results[0].id, 3);
+        assert_eq!(response.results[0].name, "Pixar");
     }
 
     #[tokio::test]
     async fn search_keyword() {
-        let response = TmdbClient::new()
+        dotenvy::dotenv().ok();
+        let response = TmdbClient::from_env("TMDB_TOKEN")
             .unwrap()
-            .search(SearchQuery::simple_keyword("space"))
+            .search_simple::<Keyword>("space")
             .await
             .unwrap();
 
         assert!(!response.results.is_empty(), "{response:#?}");
+        assert_eq!(response.results[0].id, 9882);
+        assert_eq!(response.results[0].name, "space");
     }
 
     #[tokio::test]
     async fn search_multi() {
-        let response = TmdbClient::new()
+        dotenvy::dotenv().ok();
+        let response = TmdbClient::from_env("TMDB_TOKEN")
             .unwrap()
-            .search(SearchQuery::simple_multi("Avatar"))
+            .search_simple::<MultiSearch>("Avatar")
             .await
             .unwrap();
 
         assert!(!response.results.is_empty(), "{response:#?}");
+        assert_ne!(response.total_pages, 1);
     }
 }

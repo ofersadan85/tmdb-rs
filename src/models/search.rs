@@ -4,265 +4,258 @@ use super::{
     keywords::Keyword,
     movies::Movie,
     people::Person,
-    tv::{Episode, Season, TV},
+    tv::{Episode, Season, Tv},
 };
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize, de::DeserializeOwned};
 
 /// Search query parameters used across several TMDB search endpoints.
-#[derive(Debug, Serialize)]
-pub struct SearchQueryCommon<'a> {
-    pub(crate) query: &'a str,
+#[derive(Debug, Default, Serialize)]
+pub struct SearchQueryCommon {
+    pub(crate) query: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) page: Option<u32>,
 }
 
-impl<'a> SearchQueryCommon<'a> {
-    pub(crate) const fn simple(query: &'a str) -> Self {
+pub trait SearchQuery {
+    fn simple(query: String) -> Self;
+    fn page(&self) -> Option<u32>;
+    fn set_page(&mut self, page: u32);
+}
+
+impl SearchQuery for SearchQueryCommon {
+    fn simple(query: String) -> Self {
         Self { query, page: None }
     }
+
+    fn page(&self) -> Option<u32> {
+        self.page
+    }
+
+    fn set_page(&mut self, page: u32) {
+        self.page = Some(page);
+    }
+}
+
+macro_rules! impl_query_simple {
+    ($ty: ty) => {
+        impl SearchQuery for $ty {
+            #[allow(clippy::needless_update)]
+            fn simple(query: String) -> Self {
+                Self {
+                    common: SearchQueryCommon::simple(query),
+                    ..Default::default()
+                }
+            }
+
+            fn page(&self) -> Option<u32> {
+                self.common.page
+            }
+
+            fn set_page(&mut self, page: u32) {
+                self.common.set_page(page);
+            }
+        }
+    };
 }
 
 #[derive(Debug, Default, Serialize)]
-pub struct SearchQueryExtra<'a> {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub(crate) include_adult: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub(crate) language: Option<&'a str>,
-}
-
-impl SearchQueryExtra<'_> {
-    pub(crate) const fn new() -> Self {
-        Self {
-            include_adult: None,
-            language: None,
-        }
-    }
-}
-
-/// TODO: This is incomplete
-/// Represents a region for search queries.
-#[derive(Debug, Serialize)]
-pub enum Region {
-    US,
-}
-
-#[derive(Debug, Serialize)]
-pub struct SearchQueryCollection<'a> {
+pub struct SearchQueryCollection {
     #[serde(flatten)]
-    pub(crate) common: SearchQueryCommon<'a>,
+    pub(crate) common: SearchQueryCommon,
 }
 
-#[derive(Debug, Serialize)]
-pub struct SearchQueryCompany<'a> {
+#[derive(Debug, Default, Serialize)]
+pub struct SearchQueryCompany {
     #[serde(flatten)]
-    pub(crate) common: SearchQueryCommon<'a>,
+    pub(crate) common: SearchQueryCommon,
 }
 
-#[derive(Debug, Serialize)]
-pub struct SearchQueryKeyword<'a> {
+#[derive(Debug, Default, Serialize)]
+pub struct SearchQueryKeyword {
     #[serde(flatten)]
-    pub(crate) common: SearchQueryCommon<'a>,
+    pub(crate) common: SearchQueryCommon,
 }
 
-#[derive(Debug, Serialize)]
-pub struct SearchQueryMovie<'a> {
+#[derive(Debug, Default, Serialize)]
+pub struct SearchQueryMovie {
     #[serde(flatten)]
-    pub(crate) common: SearchQueryCommon<'a>,
+    pub(crate) common: SearchQueryCommon,
     #[serde(flatten)]
-    pub(crate) extra: SearchQueryExtra<'a>,
+    pub(crate) extra: SearchQueryExtra,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) year: Option<u16>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) primary_release_year: Option<u16>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub(crate) region: Option<Region>,
+    pub(crate) region: Option<String>,
 }
 
-#[derive(Debug, Serialize)]
-pub struct SearchQueryMulti<'a> {
+#[derive(Debug, Default, Serialize)]
+pub struct SearchQueryMulti {
     #[serde(flatten)]
-    pub(crate) common: SearchQueryCommon<'a>,
+    pub(crate) common: SearchQueryCommon,
     #[serde(flatten)]
-    pub(crate) extra: SearchQueryExtra<'a>,
+    pub(crate) extra: SearchQueryExtra,
 }
 
-#[derive(Debug, Serialize)]
-pub struct SearchQueryPerson<'a> {
+#[derive(Debug, Default, Serialize)]
+pub struct SearchQueryPerson {
     #[serde(flatten)]
-    pub(crate) common: SearchQueryCommon<'a>,
+    pub(crate) common: SearchQueryCommon,
     #[serde(flatten)]
-    pub(crate) extra: SearchQueryExtra<'a>,
+    pub(crate) extra: SearchQueryExtra,
 }
 
-#[derive(Debug, Serialize)]
-pub struct SearchQueryTv<'a> {
+#[derive(Debug, Default, Serialize)]
+pub struct SearchQueryTv {
     #[serde(flatten)]
-    pub(crate) common: SearchQueryCommon<'a>,
+    pub(crate) common: SearchQueryCommon,
     #[serde(flatten)]
-    pub(crate) extra: SearchQueryExtra<'a>,
+    pub(crate) extra: SearchQueryExtra,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) year: Option<u16>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) first_air_date_year: Option<u16>,
 }
 
-#[derive(Debug)]
-pub enum SearchQuery<'a> {
-    Collection(SearchQueryCollection<'a>),
-    Company(SearchQueryCompany<'a>),
-    Keyword(SearchQueryKeyword<'a>),
-    Movie(SearchQueryMovie<'a>),
-    Multi(SearchQueryMulti<'a>),
-    Person(SearchQueryPerson<'a>),
-    Tv(SearchQueryTv<'a>),
+impl_query_simple!(SearchQueryCollection);
+impl_query_simple!(SearchQueryCompany);
+impl_query_simple!(SearchQueryKeyword);
+impl_query_simple!(SearchQueryMovie);
+impl_query_simple!(SearchQueryMulti);
+impl_query_simple!(SearchQueryPerson);
+impl_query_simple!(SearchQueryTv);
+
+#[derive(Debug, Default, Serialize)]
+pub struct SearchQueryExtra {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) include_adult: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) language: Option<String>,
 }
 
-impl Serialize for SearchQuery<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+#[async_trait::async_trait]
+pub trait Searchable: Sized {
+    type Query: serde::Serialize + SearchQuery + Default + Send;
+    const SEARCH_PATH: &'static str;
+
+    async fn search(
+        client: &crate::TmdbClient,
+        base_url: &str,
+        query: Self::Query,
+    ) -> Result<SearchResults<Self, Self::Query>, reqwest::Error>
     where
-        S: serde::Serializer,
+        Self: DeserializeOwned,
     {
-        // This manual implementation of `Serialize` is necessary because `serde_urlencoded`
-        // does not support serializing enums directly.
-        match self {
-            SearchQuery::Collection(value) => value.serialize(serializer),
-            SearchQuery::Company(value) => value.serialize(serializer),
-            SearchQuery::Keyword(value) => value.serialize(serializer),
-            SearchQuery::Movie(value) => value.serialize(serializer),
-            SearchQuery::Multi(value) => value.serialize(serializer),
-            SearchQuery::Person(value) => value.serialize(serializer),
-            SearchQuery::Tv(value) => value.serialize(serializer),
-        }
+        let mut results: SearchResults<Self, Self::Query> = client
+            .client
+            .get(format!("{}/{}", base_url, Self::SEARCH_PATH))
+            .query(&query)
+            .send()
+            .await?
+            .error_for_status()?
+            .json()
+            .await?;
+        results.query = Some(query);
+        Ok(results)
+    }
+
+    async fn search_simple(
+        client: &crate::TmdbClient,
+        base_url: &str,
+        query: impl Into<String> + Send,
+    ) -> Result<SearchResults<Self, Self::Query>, reqwest::Error>
+    where
+        Self: DeserializeOwned,
+    {
+        Self::search(client, base_url, Self::Query::simple(query.into())).await
     }
 }
 
-impl<'a> SearchQuery<'a> {
-    pub(crate) const fn simple_collection(query: &'a str) -> Self {
-        Self::Collection(SearchQueryCollection {
-            common: SearchQueryCommon::simple(query),
-        })
-    }
-
-    pub(crate) const fn simple_company(query: &'a str) -> Self {
-        Self::Company(SearchQueryCompany {
-            common: SearchQueryCommon::simple(query),
-        })
-    }
-
-    pub(crate) const fn simple_keyword(query: &'a str) -> Self {
-        Self::Keyword(SearchQueryKeyword {
-            common: SearchQueryCommon::simple(query),
-        })
-    }
-
-    pub(crate) const fn simple_movie(query: &'a str) -> Self {
-        Self::Movie(SearchQueryMovie {
-            common: SearchQueryCommon::simple(query),
-            extra: SearchQueryExtra::new(),
-            year: None,
-            primary_release_year: None,
-            region: None,
-        })
-    }
-
-    pub(crate) const fn simple_multi(query: &'a str) -> Self {
-        Self::Multi(SearchQueryMulti {
-            common: SearchQueryCommon::simple(query),
-            extra: SearchQueryExtra::new(),
-        })
-    }
-
-    pub(crate) const fn simple_person(query: &'a str) -> Self {
-        Self::Person(SearchQueryPerson {
-            common: SearchQueryCommon::simple(query),
-            extra: SearchQueryExtra::new(),
-        })
-    }
-
-    pub(crate) const fn simple_tv(query: &'a str) -> Self {
-        Self::Tv(SearchQueryTv {
-            common: SearchQueryCommon::simple(query),
-            extra: SearchQueryExtra::new(),
-            year: None,
-            first_air_date_year: None,
-        })
-    }
-
-    pub(crate) const fn uri(&self) -> &'static str {
-        match self {
-            SearchQuery::Collection(_) => "search/collection",
-            SearchQuery::Company(_) => "search/company",
-            SearchQuery::Keyword(_) => "search/keyword",
-            SearchQuery::Movie(_) => "search/movie",
-            SearchQuery::Multi(_) => "search/multi",
-            SearchQuery::Person(_) => "search/person",
-            SearchQuery::Tv(_) => "search/tv",
-        }
-    }
+impl Searchable for Collection {
+    type Query = SearchQueryCollection;
+    const SEARCH_PATH: &'static str = "search/collection";
 }
 
-impl<'a> From<SearchQueryCollection<'a>> for SearchQuery<'a> {
-    fn from(value: SearchQueryCollection<'a>) -> Self {
-        SearchQuery::Collection(value)
-    }
+impl Searchable for Company {
+    type Query = SearchQueryCompany;
+    const SEARCH_PATH: &'static str = "search/company";
+}
+impl Searchable for Keyword {
+    type Query = SearchQueryKeyword;
+    const SEARCH_PATH: &'static str = "search/keyword";
 }
 
-impl<'a> From<SearchQueryCompany<'a>> for SearchQuery<'a> {
-    fn from(value: SearchQueryCompany<'a>) -> Self {
-        SearchQuery::Company(value)
-    }
+impl Searchable for Movie {
+    type Query = SearchQueryMovie;
+    const SEARCH_PATH: &'static str = "search/movie";
 }
 
-impl<'a> From<SearchQueryKeyword<'a>> for SearchQuery<'a> {
-    fn from(value: SearchQueryKeyword<'a>) -> Self {
-        SearchQuery::Keyword(value)
-    }
+impl Searchable for MultiSearch {
+    type Query = SearchQueryMulti;
+    const SEARCH_PATH: &'static str = "search/multi";
 }
 
-impl<'a> From<SearchQueryMovie<'a>> for SearchQuery<'a> {
-    fn from(value: SearchQueryMovie<'a>) -> Self {
-        SearchQuery::Movie(value)
-    }
+impl Searchable for Person {
+    type Query = SearchQueryPerson;
+    const SEARCH_PATH: &'static str = "search/person";
 }
 
-impl<'a> From<SearchQueryMulti<'a>> for SearchQuery<'a> {
-    fn from(value: SearchQueryMulti<'a>) -> Self {
-        SearchQuery::Multi(value)
-    }
-}
-
-impl<'a> From<SearchQueryPerson<'a>> for SearchQuery<'a> {
-    fn from(value: SearchQueryPerson<'a>) -> Self {
-        SearchQuery::Person(value)
-    }
-}
-
-impl<'a> From<SearchQueryTv<'a>> for SearchQuery<'a> {
-    fn from(value: SearchQueryTv<'a>) -> Self {
-        SearchQuery::Tv(value)
-    }
+impl Searchable for Tv {
+    type Query = SearchQueryTv;
+    const SEARCH_PATH: &'static str = "search/tv";
 }
 
 /// Generic search response used across several TMDB search endpoints.
 #[derive(Debug, Deserialize)]
-pub struct SearchResults {
+pub struct SearchResults<T, Q> {
     pub page: u32,
     pub total_results: u32,
     pub total_pages: u32,
-    pub results: Vec<SearchResult>,
+    pub results: Vec<T>,
+    #[serde(skip)]
+    pub(crate) query: Option<Q>,
 }
 
-/// Generic search response used across several TMDB search endpoints.
+impl<T, Q> SearchResults<T, Q>
+where
+    Q: SearchQuery + Clone,
+{
+    pub fn query_next_page(&self) -> Option<Q> {
+        if let Some(page) = self.query.as_ref().and_then(SearchQuery::page)
+            && page < self.total_pages
+            && let Some(query) = self.query.as_ref()
+        {
+            let mut next_query = query.clone();
+            next_query.set_page(page + 1);
+            return Some(next_query);
+        }
+        None
+    }
+
+    pub fn query_previous_page(&self) -> Option<Q> {
+        if let Some(page) = self.query.as_ref().and_then(SearchQuery::page)
+            && page > 1
+            && let Some(query) = self.query.as_ref()
+        {
+            let mut previous_query = query.clone();
+            previous_query.set_page(page - 1);
+            return Some(previous_query);
+        }
+        None
+    }
+}
+
 #[derive(Debug, Deserialize)]
-#[serde(untagged)]
+#[serde(tag = "media_type", rename_all = "snake_case")]
 #[expect(clippy::large_enum_variant)]
-pub enum SearchResult {
+pub enum MultiSearch {
     Collection(Collection),
     Company(Company),
     Keyword(Keyword),
     Movie(Movie),
     Person(Person),
-    Tv(TV),
+    Tv(Tv),
 }
 
 /// External sources for finding items by their external IDs.
@@ -295,7 +288,7 @@ pub struct FindResponse {
     #[serde(rename = "person_results")]
     pub(crate) people: Vec<Person>,
     #[serde(rename = "tv_results")]
-    pub(crate) tv: Vec<TV>,
+    pub(crate) tv: Vec<Tv>,
     #[serde(rename = "tv_episode_results")]
     pub(crate) episodes: Vec<Episode>,
     #[serde(rename = "tv_season_results")]

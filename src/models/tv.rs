@@ -58,7 +58,7 @@ pub struct TVCreator {
 /// TV details from the TMDB TV chapter.
 #[derive(Debug, Default, PartialEq, Deserialize, Serialize)]
 #[serde(default)]
-pub struct TV {
+pub struct Tv {
     pub id: u64,
     pub backdrop_path: Option<String>,
     pub created_by: Vec<TVCreator>,
