@@ -6,6 +6,7 @@ struct RatingRequest {
     value: f32,
 }
 
+/// Trait for adding and removing ratings for an item
 #[async_trait::async_trait]
 pub trait Rating {
     fn rating_endpoint(&self) -> impl std::fmt::Display;
@@ -18,7 +19,7 @@ pub trait Rating {
         client: &crate::TmdbClient,
         rating: f32,
     ) -> Result<super::TmdbResponse, reqwest::Error> {
-        let url = format!("{}/{}/rating", client.base_url, self.rating_endpoint(),);
+        let url = format!("{}/{}/rating", client.base_url, self.rating_endpoint());
         client
             .client
             .post(&url)
@@ -37,7 +38,7 @@ pub trait Rating {
         &self,
         client: &crate::TmdbClient,
     ) -> Result<super::TmdbResponse, reqwest::Error> {
-        let url = format!("{}/{}/rating", client.base_url, self.rating_endpoint(),);
+        let url = format!("{}/{}/rating", client.base_url, self.rating_endpoint());
         client
             .client
             .delete(&url)
@@ -71,6 +72,13 @@ impl Rating for super::Episode {
 }
 
 impl crate::TmdbClient {
+    /// Adds a rating for a movie.
+    ///
+    /// Rating value must be a multiple of 0.5 between 0.5 and 10.0
+    ///
+    /// # Errors
+    ///
+    /// Returns [`reqwest::Error`] if the request fails.
     pub async fn rating_add_movie(
         &self,
         id: u64,
@@ -84,6 +92,11 @@ impl crate::TmdbClient {
         .await
     }
 
+    /// Removes a rating for a movie.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`reqwest::Error`] if the request fails.
     pub async fn rating_delete_movie(
         &self,
         id: u64,
@@ -96,6 +109,13 @@ impl crate::TmdbClient {
         .await
     }
 
+    /// Adds a rating for a TV show.
+    ///
+    /// Rating value must be a multiple of 0.5 between 0.5 and 10.0
+    ///
+    /// # Errors
+    ///
+    /// Returns [`reqwest::Error`] if the request fails.
     pub async fn rating_add_tv(
         &self,
         id: u64,
@@ -109,6 +129,11 @@ impl crate::TmdbClient {
         .await
     }
 
+    /// Removes a rating for a TV show.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`reqwest::Error`] if the request fails.
     pub async fn rating_delete_tv(&self, id: u64) -> Result<super::TmdbResponse, reqwest::Error> {
         super::Tv {
             id,
@@ -118,6 +143,13 @@ impl crate::TmdbClient {
         .await
     }
 
+    /// Adds a rating for an episode.
+    ///
+    /// Rating value must be a multiple of 0.5 between 0.5 and 10.0
+    ///
+    /// # Errors
+    ///
+    /// Returns [`reqwest::Error`] if the request fails.
     pub async fn rating_add_episode(
         &self,
         show_id: u64,
@@ -135,6 +167,11 @@ impl crate::TmdbClient {
         .await
     }
 
+    /// Removes a rating for an episode.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`reqwest::Error`] if the request fails.
     pub async fn rating_delete_episode(
         &self,
         show_id: u64,
@@ -170,7 +207,6 @@ mod tests {
         assert!(result.success, "{result:#?}");
         let result = client.rating_add_movie(550, 9.5).await.unwrap();
         assert!(result.success, "{result:#?}");
-        // TODO: Check that the ratings actually appear in https://developer.themoviedb.org/reference/account-rated-movies
     }
 
     #[tokio::test]
@@ -181,7 +217,6 @@ mod tests {
         assert!(result.success, "{result:#?}");
         let result = client.rating_add_tv(1399, 6.5).await.unwrap();
         assert!(result.success, "{result:#?}");
-        // TODO: Check that the ratings actually appear in https://developer.themoviedb.org/reference/account-rated-tv
     }
 
     #[tokio::test]
@@ -192,6 +227,5 @@ mod tests {
         assert!(result.success, "{result:#?}");
         let result = client.rating_add_episode(1399, 8, 6, 2.5).await.unwrap();
         assert!(result.success, "{result:#?}");
-        // TODO: Check that the ratings actually appear in https://developer.themoviedb.org/reference/account-rated-tv-episodes
     }
 }

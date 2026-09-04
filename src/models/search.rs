@@ -9,15 +9,20 @@ pub struct SearchQueryCommon {
     pub(crate) page: Option<u32>,
 }
 
-pub trait SearchQuery {
-    fn simple(query: String) -> Self;
+pub trait SearchQuery: Default {
+    fn simple(_query: impl Into<String>) -> Self {
+        Self::default()
+    }
     fn page(&self) -> Option<u32>;
     fn set_page(&mut self, page: u32);
 }
 
 impl SearchQuery for SearchQueryCommon {
-    fn simple(query: String) -> Self {
-        Self { query, page: None }
+    fn simple(query: impl Into<String>) -> Self {
+        Self {
+            query: query.into(),
+            page: None,
+        }
     }
 
     fn page(&self) -> Option<u32> {
@@ -93,9 +98,9 @@ macro_rules! impl_query_simple {
     ($ty: ty) => {
         impl SearchQuery for $ty {
             #[allow(clippy::needless_update)]
-            fn simple(query: String) -> Self {
+            fn simple(query: impl Into<String>) -> Self {
                 Self {
-                    common: SearchQueryCommon::simple(query),
+                    common: SearchQueryCommon::simple(query.into()),
                     ..Default::default()
                 }
             }
@@ -359,6 +364,7 @@ impl crate::TmdbClient {
 mod tests {
     use super::*;
     use crate::TmdbClient;
+    use crate::models::*;
 
     fn client() -> TmdbClient {
         dotenvy::dotenv().ok();
