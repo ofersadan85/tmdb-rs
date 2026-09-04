@@ -1,8 +1,6 @@
 use reqwest::header::{AUTHORIZATION, HeaderMap, HeaderValue};
-use serde::de::DeserializeOwned;
 
 mod models;
-use models::{ExternalSourceId, FindResponse, SearchResults, Searchable};
 
 /// Error type for TMDB client operations.
 #[derive(Debug, thiserror::Error)]
@@ -55,72 +53,5 @@ impl TmdbClient {
             client,
             base_url: "https://api.themoviedb.org/3".to_string(),
         })
-    }
-
-    /// Finds items by their external ID using the specified external source.
-    ///
-    /// # Arguments
-    ///
-    /// `external_id` - The external ID of the item to find.
-    /// `external_source` - The external source to use for the lookup.
-    /// `language` - Optional language parameter for the response.
-    ///
-    /// # Returns
-    ///
-    /// A [`FindResponse`] containing the search results.
-    ///
-    /// # Errors
-    ///
-    /// Returns [`reqwest::Error`] if the request to the TMDB API fails
-    /// or if the response cannot be deserialized.
-    pub async fn find_by_external_id(
-        &self,
-        external_id: &str,
-        external_source: ExternalSourceId,
-        language: Option<&str>,
-    ) -> Result<FindResponse, reqwest::Error> {
-        let url = format!("{}/find/{external_id}", self.base_url);
-        let mut req = self
-            .client
-            .get(&url)
-            .query(&[("external_source", external_source)]);
-        if let Some(language) = language {
-            req = req.query(&[("language", language)]);
-        }
-        req.send().await?.error_for_status()?.json().await
-    }
-
-    /// Searches for items using the specified search query parameters.
-    /// Returns a [`SearchResults`] containing the search results.
-    ///
-    /// # Errors
-    ///
-    /// Returns [`reqwest::Error`] if the request to the TMDB API fails
-    /// or if the response cannot be deserialized.
-    pub async fn search<T>(
-        &self,
-        params: T::Query,
-    ) -> Result<SearchResults<T, T::Query>, reqwest::Error>
-    where
-        T: Searchable + DeserializeOwned + Send,
-    {
-        T::search(self, &self.base_url, params).await
-    }
-
-    /// Searches for items using a simple query string.
-    /// Returns a [`SearchResults`] containing the search results.
-    ///
-    /// # Errors
-    ///
-    /// Returns [`reqwest::Error`] if the request to the TMDB API fails
-    /// or if the response cannot be deserialized.
-    pub async fn search_simple<T>(
-        &self,
-        query: impl Into<String>,
-    ) -> Result<SearchResults<T, T::Query>, reqwest::Error>
-    where
-        T: Searchable + DeserializeOwned + Send,
-    {
-        T::search_simple(self, &self.base_url, query.into()).await
     }
 }

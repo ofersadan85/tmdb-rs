@@ -1242,7 +1242,6 @@ dependencies = [
  "dotenvy",
  "reqwest",
  "serde",
- "serde_json",
  "serde_repr",
  "thiserror",
  "tokio",

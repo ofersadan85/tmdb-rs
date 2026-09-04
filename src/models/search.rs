@@ -29,28 +29,6 @@ impl SearchQuery for SearchQueryCommon {
     }
 }
 
-macro_rules! impl_query_simple {
-    ($ty: ty) => {
-        impl SearchQuery for $ty {
-            #[allow(clippy::needless_update)]
-            fn simple(query: String) -> Self {
-                Self {
-                    common: SearchQueryCommon::simple(query),
-                    ..Default::default()
-                }
-            }
-
-            fn page(&self) -> Option<u32> {
-                self.common.page
-            }
-
-            fn set_page(&mut self, page: u32) {
-                self.common.set_page(page);
-            }
-        }
-    };
-}
-
 #[derive(Debug, Default, Serialize)]
 pub struct SearchQueryCollection {
     #[serde(flatten)]
@@ -111,6 +89,28 @@ pub struct SearchQueryTv {
     pub(crate) first_air_date_year: Option<u16>,
 }
 
+macro_rules! impl_query_simple {
+    ($ty: ty) => {
+        impl SearchQuery for $ty {
+            #[allow(clippy::needless_update)]
+            fn simple(query: String) -> Self {
+                Self {
+                    common: SearchQueryCommon::simple(query),
+                    ..Default::default()
+                }
+            }
+
+            fn page(&self) -> Option<u32> {
+                self.common.page
+            }
+
+            fn set_page(&mut self, page: u32) {
+                self.common.set_page(page);
+            }
+        }
+    };
+}
+
 impl_query_simple!(SearchQueryCollection);
 impl_query_simple!(SearchQueryCompany);
 impl_query_simple!(SearchQueryKeyword);
@@ -134,7 +134,6 @@ pub trait Searchable: Sized {
 
     async fn search(
         client: &crate::TmdbClient,
-        base_url: &str,
         query: Self::Query,
     ) -> Result<SearchResults<Self, Self::Query>, reqwest::Error>
     where
@@ -142,7 +141,7 @@ pub trait Searchable: Sized {
     {
         let mut results: SearchResults<Self, Self::Query> = client
             .client
-            .get(format!("{}/{}", base_url, Self::SEARCH_PATH))
+            .get(format!("{}/{}", client.base_url, Self::SEARCH_PATH))
             .query(&query)
             .send()
             .await?
@@ -155,13 +154,12 @@ pub trait Searchable: Sized {
 
     async fn search_simple(
         client: &crate::TmdbClient,
-        base_url: &str,
         query: impl Into<String> + Send,
     ) -> Result<SearchResults<Self, Self::Query>, reqwest::Error>
     where
         Self: DeserializeOwned,
     {
-        Self::search(client, base_url, Self::Query::simple(query.into())).await
+        Self::search(client, Self::Query::simple(query.into())).await
     }
 }
 
@@ -286,6 +284,75 @@ pub struct FindResponse {
     pub(crate) episodes: Vec<Episode>,
     #[serde(rename = "tv_season_results")]
     pub(crate) seasons: Vec<Season>,
+}
+
+impl crate::TmdbClient {
+    /// Finds items by their external ID using the specified external source.
+    ///
+    /// # Arguments
+    ///
+    /// `external_id` - The external ID of the item to find.
+    /// `external_source` - The external source to use for the lookup.
+    /// `language` - Optional language parameter for the response.
+    ///
+    /// # Returns
+    ///
+    /// A [`FindResponse`] containing the search results.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`reqwest::Error`] if the request to the TMDB API fails
+    /// or if the response cannot be deserialized.
+    pub async fn find_by_external_id(
+        &self,
+        external_id: &str,
+        external_source: ExternalSourceId,
+        language: Option<&str>,
+    ) -> Result<FindResponse, reqwest::Error> {
+        let url = format!("{}/find/{external_id}", self.base_url);
+        let mut req = self
+            .client
+            .get(&url)
+            .query(&[("external_source", external_source)]);
+        if let Some(language) = language {
+            req = req.query(&[("language", language)]);
+        }
+        req.send().await?.error_for_status()?.json().await
+    }
+
+    /// Searches for items using the specified search query parameters.
+    /// Returns a [`SearchResults`] containing the search results.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`reqwest::Error`] if the request to the TMDB API fails
+    /// or if the response cannot be deserialized.
+    pub async fn search<T>(
+        &self,
+        params: T::Query,
+    ) -> Result<SearchResults<T, T::Query>, reqwest::Error>
+    where
+        T: Searchable + DeserializeOwned + Send,
+    {
+        T::search(self, params).await
+    }
+
+    /// Searches for items using a simple query string.
+    /// Returns a [`SearchResults`] containing the search results.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`reqwest::Error`] if the request to the TMDB API fails
+    /// or if the response cannot be deserialized.
+    pub async fn search_simple<T>(
+        &self,
+        query: impl Into<String>,
+    ) -> Result<SearchResults<T, T::Query>, reqwest::Error>
+    where
+        T: Searchable + DeserializeOwned + Send,
+    {
+        T::search_simple(self, query.into()).await
+    }
 }
 
 #[cfg(test)]
