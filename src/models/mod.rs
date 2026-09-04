@@ -13,8 +13,6 @@ mod changes;
 #[expect(dead_code)]
 mod discover;
 #[expect(dead_code)]
-mod favorites;
-#[expect(dead_code)]
 mod lists;
 mod movies;
 pub use movies::Movie;
@@ -34,8 +32,6 @@ mod translations;
 mod trending;
 mod tv;
 pub use tv::{Episode, Season, Tv};
-#[expect(dead_code)]
-mod watchlist;
 
 #[derive(Debug, PartialEq, Eq, Deserialize, Serialize)]
 pub struct Genre {
