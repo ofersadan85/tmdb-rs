@@ -12,7 +12,8 @@ pub struct Network {
 }
 
 /// The final episode data returned in a TV details payload.
-#[derive(Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Debug, Default, Deserialize, Serialize)]
+#[serde(default)]
 pub struct Episode {
     pub id: u64,
     pub name: String,
@@ -21,11 +22,11 @@ pub struct Episode {
     pub vote_count: u64,
     pub air_date: String,
     #[serde(rename = "episode_number")]
-    pub number: u32,
+    pub number: u64,
     pub production_code: Option<String>,
-    pub runtime: u32,
-    pub season_number: u32,
-    pub show_id: u32,
+    pub runtime: u16,
+    pub season_number: u64,
+    pub show_id: u64,
     pub still_path: Option<String>,
 }
 

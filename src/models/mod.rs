@@ -20,6 +20,8 @@ mod movies;
 pub use movies::Movie;
 mod people;
 pub use people::Person;
+mod rating;
+pub use rating::Rating;
 #[expect(dead_code)]
 mod reviews;
 mod search;
@@ -115,4 +117,12 @@ pub struct Video {
     pub official: bool,
     pub published_at: String,
     pub id: String,
+}
+
+#[derive(Debug, Default, Deserialize)]
+#[serde(default)]
+pub struct TmdbResponse {
+    pub success: bool,
+    pub status_code: u16,
+    pub status_message: String,
 }
