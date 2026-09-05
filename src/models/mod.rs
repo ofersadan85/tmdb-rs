@@ -12,8 +12,8 @@ mod certifications;
 mod changes;
 #[expect(dead_code)]
 mod discover;
-#[expect(dead_code)]
 mod lists;
+pub use lists::ListInfo;
 mod movies;
 pub use movies::Movie;
 mod people;

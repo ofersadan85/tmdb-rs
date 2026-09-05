@@ -41,7 +41,26 @@ pub struct AccountQuery {
     sort_by: Option<SortBy>,
 }
 
-impl super::search::SearchQuery for AccountQuery {
+impl SearchQuery for AccountQuery {
+    fn page(&self) -> Option<u32> {
+        self.page
+    }
+
+    fn set_page(&mut self, page: u32) {
+        self.page = Some(page);
+    }
+}
+
+#[derive(Debug, Default, Serialize)]
+#[serde(default)]
+pub struct AccountListsQuery {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    page: Option<u32>,
+    #[serde(skip_serializing_if = "String::is_empty")]
+    session: String,
+}
+
+impl SearchQuery for AccountListsQuery {
     fn page(&self) -> Option<u32> {
         self.page
     }
@@ -212,7 +231,7 @@ impl AccountDetails {
         req.send().await?.error_for_status()?.json().await
     }
 
-    async fn get_account_list<T>(
+    async fn get_special_list<T>(
         &self,
         client: &crate::TmdbClient,
         query: AccountQuery,
@@ -249,7 +268,7 @@ impl AccountDetails {
     where
         T: OnNonRatedAccountLists + DeserializeOwned,
     {
-        self.get_account_list(client, query, AccountListKind::Favorite)
+        self.get_special_list(client, query, AccountListKind::Favorite)
             .await
     }
 
@@ -261,7 +280,7 @@ impl AccountDetails {
     where
         T: OnAccountLists + DeserializeOwned,
     {
-        self.get_account_list(client, query, AccountListKind::Rated)
+        self.get_special_list(client, query, AccountListKind::Rated)
             .await
     }
 
@@ -273,7 +292,7 @@ impl AccountDetails {
     where
         T: OnNonRatedAccountLists + DeserializeOwned,
     {
-        self.get_account_list(client, query, AccountListKind::Watchlist)
+        self.get_special_list(client, query, AccountListKind::Watchlist)
             .await
     }
 
@@ -372,6 +391,24 @@ impl AccountDetails {
             false,
         )
         .await
+    }
+
+    /// Get the account's custom lists.
+    async fn custom_lists(
+        &self,
+        client: &crate::TmdbClient,
+        query: AccountListsQuery,
+    ) -> Result<SearchResults<super::ListInfo, AccountListsQuery>, reqwest::Error> {
+        let url = format!("{}/account/{}/lists", client.base_url, self.id);
+        client
+            .client
+            .get(&url)
+            .query(&query)
+            .send()
+            .await?
+            .error_for_status()?
+            .json()
+            .await
     }
 }
 
@@ -556,6 +593,18 @@ mod tests {
         assert!(
             !watchlist.results.iter().any(|movie| movie.id == 11),
             "{watchlist:#?}"
+        );
+    }
+
+    #[tokio::test]
+    async fn custom_lists() {
+        let lists = AccountDetails::default()
+            .custom_lists(&client(), AccountListsQuery::default())
+            .await
+            .unwrap();
+        assert!(
+            lists.results.is_empty(),
+            "current test assume no custom lists exist initially:\n{lists:#?}",
         );
     }
 }
