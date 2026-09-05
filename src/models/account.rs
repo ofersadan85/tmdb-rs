@@ -1,14 +1,30 @@
-use crate::models::MediaType;
+//! Account-related models and traits for interacting with TMDB API.
+//!
+//! Refer to the following TMDB API documentation for more details
+//! (add `.md` to the URL for a markdown version)
+//!
+//! - [Account Details](https://developer.themoviedb.org/reference/account-details)
+//! - [Add Favorite](https://developer.themoviedb.org/reference/account-add-favorite)
+//! - [Add to Watchlist](https://developer.themoviedb.org/reference/account-add-to-watchlist)
+//! - [Favorite Movies](https://developer.themoviedb.org/reference/account-get-favorites)
+//! - [Favorite TV](https://developer.themoviedb.org/reference/account-favorite-tv)
+//! - [Account Lists](https://developer.themoviedb.org/reference/account-lists)
+//! - [Rated Movies](https://developer.themoviedb.org/reference/account-rated-movies)
+//! - [Rated TV](https://developer.themoviedb.org/reference/account-rated-tv)
+//! - [Rated TV Episodes](https://developer.themoviedb.org/reference/account-rated-tv-episodes)
+//! - [Watchlist Movies](https://developer.themoviedb.org/reference/account-watchlist-movies)
+//! - [Watchlist TV](https://developer.themoviedb.org/reference/account-watchlist-tv)
 
 use super::{
-    Episode, Movie, TmdbResponse, Tv,
+    Episode, MediaType, Movie, TmdbResponse, Tv,
     lists::AddToListRequest,
     search::{SearchQuery, SearchResults},
 };
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 
+/// Sorting options for account-related queries.
 #[derive(Debug, Default)]
-enum SortBy {
+pub enum SortBy {
     #[default]
     CreatedAtAscending,
     CreatedAtDescending,
@@ -120,6 +136,7 @@ impl OnAccountLists for Episode {
     const ENDPOINT: &'static str = "tv/episodes";
 }
 
+#[async_trait::async_trait]
 pub trait OnNonRatedAccountLists: OnAccountLists {
     const MEDIA_TYPE: MediaType;
 
@@ -209,6 +226,10 @@ impl AccountDetails {
     ///
     /// This will always return the calling user's details.
     /// Use [`Self::get_with_session`] to retrieve account details for a specific session.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`reqwest::Error`] if the request to the TMDB API fails.
     pub async fn get(client: &crate::TmdbClient) -> Result<Self, reqwest::Error> {
         Self::get_with_session(client, 0, None).await
     }
@@ -218,6 +239,10 @@ impl AccountDetails {
     /// Calling this function with [`None`] as a session ID is equivalent to using
     /// [`Self::get`] and will only return the calling user's details, regardless
     /// of the provided account ID.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`reqwest::Error`] if the request to the TMDB API fails.
     pub async fn get_with_session(
         client: &crate::TmdbClient,
         id: u64,
@@ -234,16 +259,17 @@ impl AccountDetails {
     async fn get_special_list<T>(
         &self,
         client: &crate::TmdbClient,
-        query: AccountQuery,
+        mut query: AccountQuery,
         list_type: AccountListKind,
     ) -> Result<SearchResults<T, AccountQuery>, reqwest::Error>
     where
         T: OnAccountLists + DeserializeOwned,
     {
+        query.account_id = self.id;
         let url = format!(
             "{}/account/{}/{}/{}",
             client.base_url,
-            self.id,
+            query.account_id,
             list_type,
             T::ENDPOINT
         );
@@ -260,6 +286,11 @@ impl AccountDetails {
         Ok(results)
     }
 
+    /// Retrieves a [`SearchResults`] for the account's favorites list.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`reqwest::Error`] if the request to the TMDB API fails.
     pub async fn favorites<T>(
         &self,
         client: &crate::TmdbClient,
@@ -272,6 +303,11 @@ impl AccountDetails {
             .await
     }
 
+    /// Retrieves a [`SearchResults`] for the account's rated list.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`reqwest::Error`] if the request to the TMDB API fails.
     pub async fn rated<T>(
         &self,
         client: &crate::TmdbClient,
@@ -284,6 +320,11 @@ impl AccountDetails {
             .await
     }
 
+    /// Retrieves a [`SearchResults`] for the account's watchlist.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`reqwest::Error`] if the request to the TMDB API fails.
     pub async fn watchlist<T>(
         &self,
         client: &crate::TmdbClient,
@@ -326,6 +367,10 @@ impl AccountDetails {
     }
 
     /// Adds an item to the account favorites.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`reqwest::Error`] if the request to the TMDB API fails.
     pub async fn favorite_add(
         &self,
         client: &crate::TmdbClient,
@@ -343,6 +388,10 @@ impl AccountDetails {
     }
 
     /// Adds an item to the account watchlist.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`reqwest::Error`] if the request to the TMDB API fails.
     pub async fn watchlist_add(
         &self,
         client: &crate::TmdbClient,
@@ -360,6 +409,10 @@ impl AccountDetails {
     }
 
     /// Removes an item from the account favorites.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`reqwest::Error`] if the request to the TMDB API fails.
     pub async fn favorite_remove(
         &self,
         client: &crate::TmdbClient,
@@ -377,6 +430,10 @@ impl AccountDetails {
     }
 
     /// Removes an item from the account watchlist.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`reqwest::Error`] if the request to the TMDB API fails.
     pub async fn watchlist_remove(
         &self,
         client: &crate::TmdbClient,
@@ -394,7 +451,11 @@ impl AccountDetails {
     }
 
     /// Get the account's custom lists.
-    async fn custom_lists(
+    ///
+    /// # Errors
+    ///
+    /// Returns [`reqwest::Error`] if the request to the TMDB API fails.
+    pub async fn custom_lists(
         &self,
         client: &crate::TmdbClient,
         query: AccountListsQuery,
@@ -409,6 +470,134 @@ impl AccountDetails {
             .error_for_status()?
             .json()
             .await
+    }
+}
+
+impl crate::TmdbClient {
+    /// See documentation for [`AccountDetails::get`].
+    /// 
+    /// # Errors
+    ///
+    /// Returns [`reqwest::Error`] if the request to the TMDB API fails.
+    pub async fn account_details(&self) -> Result<AccountDetails, reqwest::Error> {
+        AccountDetails::get(self).await
+    }
+
+    /// See documentation for [`AccountDetails::custom_lists`].
+    ///
+    /// # Errors
+    ///
+    /// Returns [`reqwest::Error`] if the request to the TMDB API fails.
+    pub async fn account_custom_lists(
+        &self,
+        account: &AccountDetails,
+        query: AccountListsQuery,
+    ) -> Result<SearchResults<super::ListInfo, AccountListsQuery>, reqwest::Error> {
+        account.custom_lists(self, query).await
+    }
+
+    /// See documentation for [`AccountDetails::favorites`].
+    ///
+    /// # Errors
+    ///
+    /// Returns [`reqwest::Error`] if the request to the TMDB API fails.
+    pub async fn account_favorites<T>(
+        &self,
+        account: &AccountDetails,
+        query: AccountQuery,
+    ) -> Result<SearchResults<T, AccountQuery>, reqwest::Error>
+    where
+        T: OnNonRatedAccountLists + DeserializeOwned,
+    {
+        account.favorites::<T>(self, query).await
+    }
+
+    /// See documentation for [`AccountDetails::favorite_add`].
+    ///
+    /// # Errors
+    ///
+    /// Returns [`reqwest::Error`] if the request to the TMDB API fails.
+    pub async fn account_favorite_add(
+        &self,
+        account: &AccountDetails,
+        media_type: MediaType,
+        media_id: u64,
+    ) -> Result<TmdbResponse, reqwest::Error> {
+        account.favorite_add(self, media_type, media_id).await
+    }
+
+    /// See documentation for [`AccountDetails::favorite_remove`].
+    ///
+    /// # Errors
+    ///
+    /// Returns [`reqwest::Error`] if the request to the TMDB API fails.
+    pub async fn account_favorite_remove(
+        &self,
+        account: &AccountDetails,
+        media_type: MediaType,
+        media_id: u64,
+    ) -> Result<TmdbResponse, reqwest::Error> {
+        account.favorite_remove(self, media_type, media_id).await
+    }
+
+    /// See documentation for [`AccountDetails::rated`].
+    ///
+    /// # Errors
+    ///
+    /// Returns [`reqwest::Error`] if the request to the TMDB API fails.
+    pub async fn account_rated<T>(
+        &self,
+        account: &AccountDetails,
+        query: AccountQuery,
+    ) -> Result<SearchResults<T, AccountQuery>, reqwest::Error>
+    where
+        T: OnAccountLists + DeserializeOwned,
+    {
+        account.rated::<T>(self, query).await
+    }
+
+    /// See documentation for [`AccountDetails::watchlist`].
+    ///
+    /// # Errors
+    ///
+    /// Returns [`reqwest::Error`] if the request to the TMDB API fails.
+    pub async fn account_watchlist<T>(
+        &self,
+        account: &AccountDetails,
+        query: AccountQuery,
+    ) -> Result<SearchResults<T, AccountQuery>, reqwest::Error>
+    where
+        T: OnNonRatedAccountLists + DeserializeOwned,
+    {
+        account.watchlist::<T>(self, query).await
+    }
+
+    /// See documentation for [`AccountDetails::watchlist_add`].
+    ///
+    /// # Errors
+    ///
+    /// Returns [`reqwest::Error`] if the request to the TMDB API fails.
+    pub async fn account_watchlist_add<T>(
+        &self,
+        account: &AccountDetails,
+        media_type: MediaType,
+        media_id: u64,
+    ) -> Result<TmdbResponse, reqwest::Error> {
+        account.watchlist_add(self, media_type, media_id).await
+    }
+
+    /// See documentation for [`AccountDetails::watchlist_remove`].
+    ///
+    /// # Errors
+    ///
+    /// Returns [`reqwest::Error`] if the request to the TMDB API fails.
+    pub async fn account_watchlist_remove(
+        &self,
+        account: &AccountDetails,
+        media_type: MediaType,
+        media_id: u64,
+    ) -> Result<TmdbResponse, reqwest::Error> {
+        account.watchlist_remove(self, media_type, media_id).await
     }
 }
 

@@ -1,3 +1,16 @@
+//! Search-related models and traits for interacting with TMDB API.
+//!
+//! Refer to the following TMDB API documentation for more details
+//! (add `.md` to the URL for a markdown version)
+//! 
+//! - [Search Collection](https://developer.themoviedb.org/reference/search-collection)
+//! - [Search Company](https://developer.themoviedb.org/reference/search-company)
+//! - [Search Keyword](https://developer.themoviedb.org/reference/search-keyword)
+//! - [Search Movie](https://developer.themoviedb.org/reference/search-movie)
+//! - [Search Multi](https://developer.themoviedb.org/reference/search-multi)
+//! - [Search Person](https://developer.themoviedb.org/reference/search-person)
+//! - [Search TV Show](https://developer.themoviedb.org/reference/search-tv)
+
 use super::{Collection, Company, Episode, Keyword, Movie, Person, Season, Tv};
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 

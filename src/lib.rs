@@ -1,6 +1,7 @@
 use reqwest::header::{AUTHORIZATION, HeaderMap, HeaderValue};
 
 mod models;
+pub use models::*;
 
 /// Error type for TMDB client operations.
 #[derive(Debug, thiserror::Error)]

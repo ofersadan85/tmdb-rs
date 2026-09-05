@@ -2,8 +2,8 @@
 #![allow(unused_imports)]
 use serde::{Deserialize, Serialize};
 
-#[expect(dead_code)]
 mod account;
+pub use account::{AccountDetails, AccountQuery, OnAccountLists, OnNonRatedAccountLists, SortBy};
 #[expect(dead_code)]
 mod auth;
 #[expect(dead_code)]
@@ -33,15 +33,14 @@ mod trending;
 mod tv;
 pub use tv::{Episode, Season, Tv};
 
-#[derive(Debug, PartialEq, Eq, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct Genre {
     pub id: u64,
     pub name: String,
 }
 
 /// A simple image payload used by media endpoints.
-#[expect(dead_code)]
-#[derive(Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct ImageInfo {
     pub aspect_ratio: f64,
     pub height: u32,
@@ -53,14 +52,14 @@ pub struct ImageInfo {
 }
 
 /// A country object used in production and release information.
-#[derive(Debug, PartialEq, Eq, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct Country {
     pub iso_3166_1: String,
     pub name: String,
 }
 
 /// A language object used in production and release information.
-#[derive(Debug, PartialEq, Eq, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct Language {
     pub english_name: String,
     pub iso_639_1: String,
@@ -74,7 +73,7 @@ pub struct Keyword {
     pub name: String,
 }
 
-#[derive(Debug, Default, PartialEq, Eq, Deserialize, Serialize)]
+#[derive(Debug, Default, Deserialize, Serialize)]
 #[serde(default)]
 pub struct Company {
     pub description: Option<String>,
@@ -99,8 +98,7 @@ pub struct Collection {
 }
 
 /// A video entry attached through the append-to-response pattern.
-#[expect(dead_code)]
-#[derive(Debug, PartialEq, Eq, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct Video {
     pub iso_639_1: String,
     pub iso_3166_1: String,

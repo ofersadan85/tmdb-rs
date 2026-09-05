@@ -1,3 +1,18 @@
+//! Rating-related models and traits for interacting with TMDB API.
+//!
+//! Refer to the following TMDB API documentation for more details
+//! (add `.md` to the URL for a markdown version)
+//! 
+//! - [Add Movie Rating](https://developer.themoviedb.org/reference/movie-add-rating)
+//! - [Delete Movie Rating](https://developer.themoviedb.org/reference/movie-delete-rating)
+//! - [Add TV Show Rating](https://developer.themoviedb.org/reference/tv-series-add-rating)
+//! - [Delete TV Show Rating](https://developer.themoviedb.org/reference/tv-series-delete-rating)
+//! - [Add TV Episode Rating](https://developer.themoviedb.org/reference/tv-episode-add-rating)
+//! - [Delete TV Episode Rating](https://developer.themoviedb.org/reference/tv-episode-delete-rating)
+//!
+//! For getting a user's existing ratings, refer to [`crate::AccountDetails::rated`]
+//! 
+
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize)]
