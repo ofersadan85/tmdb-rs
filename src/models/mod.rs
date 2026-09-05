@@ -28,7 +28,6 @@ pub use search::{ExternalSourceId, FindResponse, MultiSearch, SearchResults, Sea
 mod session;
 #[expect(dead_code)]
 mod translations;
-#[expect(dead_code)]
 mod trending;
 mod tv;
 pub use tv::{Episode, Season, Tv};
