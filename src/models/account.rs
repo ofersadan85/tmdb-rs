@@ -475,7 +475,7 @@ impl AccountDetails {
 
 impl crate::TmdbClient {
     /// See documentation for [`AccountDetails::get`].
-    /// 
+    ///
     /// # Errors
     ///
     /// Returns [`reqwest::Error`] if the request to the TMDB API fails.

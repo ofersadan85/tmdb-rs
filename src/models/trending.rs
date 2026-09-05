@@ -1,34 +1,116 @@
-use serde::{Deserialize, Serialize};
+use core::time;
+
+use crate::{Movie, MultiSearch, Person, SearchResults, TmdbClient, Tv};
+use serde::{Deserialize, Serialize, de::DeserializeOwned};
 
 /// Time window supported by the Trending endpoints.
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "lowercase")]
 pub enum TimeWindow {
-    #[serde(rename = "day")]
     Day,
-    #[serde(rename = "week")]
     Week,
 }
 
-/// Trending item payload.
-#[derive(Debug, Deserialize, Serialize)]
-pub struct TrendingItem {
-    pub adult: Option<bool>,
-    pub backdrop_path: Option<String>,
-    pub first_air_date: Option<String>,
-    pub genre_ids: Vec<u64>,
-    pub id: u64,
-    pub media_type: super::MediaType,
-    pub name: Option<String>,
-    pub origin_country: Vec<String>,
-    pub original_language: String,
-    pub original_name: Option<String>,
-    pub original_title: Option<String>,
-    pub overview: String,
-    pub popularity: f64,
-    pub poster_path: Option<String>,
-    pub release_date: Option<String>,
-    pub title: Option<String>,
-    pub video: Option<bool>,
-    pub vote_average: f64,
-    pub vote_count: u64,
+impl std::fmt::Display for TimeWindow {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Day => write!(f, "day"),
+            Self::Week => write!(f, "week"),
+        }
+    }
+}
+
+#[async_trait::async_trait]
+pub trait Trending: Sized + DeserializeOwned {
+    const TRENDING_ENDPOINT: &'static str;
+
+    async fn trending(
+        client: &TmdbClient,
+        time_window: TimeWindow,
+        language: Option<String>,
+    ) -> Result<SearchResults<Self, ()>, reqwest::Error> {
+        let url = format!(
+            "{}/trending/{}/{}",
+            client.base_url,
+            Self::TRENDING_ENDPOINT,
+            time_window
+        );
+        let mut req = client.client.get(&url);
+        if let Some(language) = language {
+            req = req.query(&[("language", language)]);
+        }
+        req.send().await?.json().await
+    }
+}
+
+impl Trending for MultiSearch {
+    const TRENDING_ENDPOINT: &'static str = "all";
+}
+
+impl Trending for Movie {
+    const TRENDING_ENDPOINT: &'static str = "movie";
+}
+
+impl Trending for Tv {
+    const TRENDING_ENDPOINT: &'static str = "tv";
+}
+
+impl Trending for Person {
+    const TRENDING_ENDPOINT: &'static str = "person";
+}
+
+impl TmdbClient {
+    /// Fetches the trending items for the specified type and time window.
+    /// 
+    /// # Errors
+    ///
+    /// Returns [`reqwest::Error`] if the request fails.
+    pub async fn trending<T: Trending + Send>(
+        &self,
+        time_window: TimeWindow,
+        language: Option<String>,
+    ) -> Result<SearchResults<T, ()>, reqwest::Error> {
+        T::trending(self, time_window, language).await
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn client() -> TmdbClient {
+        dotenvy::dotenv().ok();
+        TmdbClient::from_env("TMDB_TOKEN").unwrap()
+    }
+
+    async fn inner<T: Trending + Send>() -> SearchResults<T, ()> {
+        let results = client().trending::<T>(TimeWindow::Day, None).await.unwrap();
+        assert_eq!(results.page, 1);
+        assert_eq!(
+            results.results.len(),
+            20,
+            "TMDB search page size should be 20"
+        );
+        results
+    }
+
+    #[tokio::test]
+    async fn all() {
+        inner::<MultiSearch>().await;
+    }
+
+    #[tokio::test]
+    async fn movies() {
+        inner::<Movie>().await;
+    }
+
+    #[tokio::test]
+    async fn tv() {
+        inner::<Tv>().await;
+    }
+
+    #[tokio::test]
+    async fn people() {
+        inner::<Person>().await;
+    }
 }

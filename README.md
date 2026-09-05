@@ -8,7 +8,7 @@ This is a wrapper around the [TMDb API](https://developers.themoviedb.org/3).
 
 This crate is updated to the latest API and includes new features, bug fixes, and improvements, including:
 
-* Support for both V3 and V4 of the TMDb API
+* Support for both V3 and V4 of the `TMDb` API
 * Support for async requests
 
 ## Usage

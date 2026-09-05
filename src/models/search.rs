@@ -2,7 +2,7 @@
 //!
 //! Refer to the following TMDB API documentation for more details
 //! (add `.md` to the URL for a markdown version)
-//! 
+//!
 //! - [Search Collection](https://developer.themoviedb.org/reference/search-collection)
 //! - [Search Company](https://developer.themoviedb.org/reference/search-company)
 //! - [Search Keyword](https://developer.themoviedb.org/reference/search-keyword)
