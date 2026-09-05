@@ -1,3 +1,5 @@
+use crate::models::MediaType;
+
 use super::{
     Episode, Movie, TmdbResponse, Tv,
     lists::AddToListRequest,
@@ -99,11 +101,74 @@ impl OnAccountLists for Episode {
     const ENDPOINT: &'static str = "tv/episodes";
 }
 
-pub trait OnNonRatedAccountLists: OnAccountLists {}
-impl OnNonRatedAccountLists for Movie {}
-impl OnNonRatedAccountLists for Tv {}
+pub trait OnNonRatedAccountLists: OnAccountLists {
+    const MEDIA_TYPE: MediaType;
 
-enum AccountListKind {
+    /// Returns the ID of the item.
+    fn get_id(&self) -> u64;
+
+    /// Sets the favorite status for the TV show on the account.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the request to the TMDB API fails.
+    async fn set_favorite(
+        &self,
+        client: &crate::TmdbClient,
+        account: &AccountDetails,
+        favorite: bool,
+    ) -> Result<super::TmdbResponse, reqwest::Error> {
+        account
+            .special_list_toggle(
+                client,
+                AccountListKind::Favorite,
+                Self::MEDIA_TYPE,
+                self.get_id(),
+                favorite,
+            )
+            .await
+    }
+
+    /// Sets the watchlist status for the TV show on the account.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the request to the TMDB API fails.
+    async fn set_watchlist(
+        &self,
+        client: &crate::TmdbClient,
+        account: &AccountDetails,
+        watchlist: bool,
+    ) -> Result<super::TmdbResponse, reqwest::Error> {
+        account
+            .special_list_toggle(
+                client,
+                AccountListKind::Watchlist,
+                Self::MEDIA_TYPE,
+                self.get_id(),
+                watchlist,
+            )
+            .await
+    }
+}
+
+impl OnNonRatedAccountLists for Movie {
+    const MEDIA_TYPE: MediaType = MediaType::Movie;
+
+    fn get_id(&self) -> u64 {
+        self.id
+    }
+}
+
+impl OnNonRatedAccountLists for Tv {
+    const MEDIA_TYPE: MediaType = MediaType::Tv;
+
+    fn get_id(&self) -> u64 {
+        self.id
+    }
+}
+
+pub enum AccountListKind {
     Favorite,
     Rated,
     Watchlist,
@@ -212,18 +277,24 @@ impl AccountDetails {
             .await
     }
 
-    /// Adds or removes an item from the account favorites list.
-    ///
-    /// The request body must contain the media type, media ID, and a boolean `favorite` flag.
-    pub async fn add_favorite(
+    async fn special_list_toggle(
         &self,
         client: &crate::TmdbClient,
-        media_type: &str,
+        list_type: AccountListKind,
+        media_type: MediaType,
         media_id: u64,
+        on_list: bool,
     ) -> Result<TmdbResponse, reqwest::Error> {
-        let url = format!("{}/account/{}/favorite", client.base_url, self.id);
+        let url = format!("{}/account/{}/{list_type}", client.base_url, self.id);
         let mut req = AddToListRequest::new(media_type, media_id);
-        req.favorite = Some(true); // This is weird but is required by the API
+        match list_type {
+            AccountListKind::Favorite => req.favorite = Some(on_list),
+            AccountListKind::Watchlist => req.watchlist = Some(on_list),
+            AccountListKind::Rated => unimplemented!("rated is not supported here"),
+        }
+        if matches!(media_type, MediaType::Person) {
+            unimplemented!("person media type is not supported here");
+        }
         client
             .client
             .post(&url)
@@ -235,27 +306,72 @@ impl AccountDetails {
             .await
     }
 
-    /// Adds or removes an item from the account watchlist.
-    ///
-    /// The request body must contain the media type, media ID, and a boolean `watchlist` flag.
-    pub async fn add_to_watchlist(
+    /// Adds an item to the account favorites.
+    pub async fn favorite_add(
         &self,
         client: &crate::TmdbClient,
-        media_type: &str,
+        media_type: MediaType,
         media_id: u64,
     ) -> Result<TmdbResponse, reqwest::Error> {
-        let url = format!("{}/account/{}/watchlist", client.base_url, self.id);
-        let mut req = AddToListRequest::new(media_type, media_id);
-        req.watchlist = Some(true); // This is weird but is required by the API
-        client
-            .client
-            .post(&url)
-            .json(&req)
-            .send()
-            .await?
-            .error_for_status()?
-            .json()
-            .await
+        self.special_list_toggle(
+            client,
+            AccountListKind::Favorite,
+            media_type,
+            media_id,
+            true,
+        )
+        .await
+    }
+
+    /// Adds an item to the account watchlist.
+    pub async fn watchlist_add(
+        &self,
+        client: &crate::TmdbClient,
+        media_type: MediaType,
+        media_id: u64,
+    ) -> Result<TmdbResponse, reqwest::Error> {
+        self.special_list_toggle(
+            client,
+            AccountListKind::Watchlist,
+            media_type,
+            media_id,
+            true,
+        )
+        .await
+    }
+
+    /// Removes an item from the account favorites.
+    pub async fn favorite_remove(
+        &self,
+        client: &crate::TmdbClient,
+        media_type: MediaType,
+        media_id: u64,
+    ) -> Result<TmdbResponse, reqwest::Error> {
+        self.special_list_toggle(
+            client,
+            AccountListKind::Favorite,
+            media_type,
+            media_id,
+            false,
+        )
+        .await
+    }
+
+    /// Removes an item from the account watchlist.
+    pub async fn watchlist_remove(
+        &self,
+        client: &crate::TmdbClient,
+        media_type: MediaType,
+        media_id: u64,
+    ) -> Result<TmdbResponse, reqwest::Error> {
+        self.special_list_toggle(
+            client,
+            AccountListKind::Watchlist,
+            media_type,
+            media_id,
+            false,
+        )
+        .await
     }
 }
 
@@ -343,7 +459,7 @@ mod tests {
     async fn add_movie_to_favorites() {
         let client = client();
         let response = AccountDetails::default()
-            .add_favorite(&client, "movie", 550)
+            .favorite_add(&client, MediaType::Movie, 550)
             .await
             .unwrap();
         assert!(response.success, "{response:#?}");
@@ -353,7 +469,7 @@ mod tests {
     async fn add_movie_to_watchlist() {
         let client = client();
         let response = AccountDetails::default()
-            .add_to_watchlist(&client, "movie", 550)
+            .watchlist_add(&client, MediaType::Movie, 550)
             .await
             .unwrap();
         assert!(response.success, "{response:#?}");
@@ -363,7 +479,7 @@ mod tests {
     async fn add_tv_to_favorites() {
         let client = client();
         let response = AccountDetails::default()
-            .add_favorite(&client, "tv", 1399)
+            .favorite_add(&client, MediaType::Tv, 1399)
             .await
             .unwrap();
         assert!(response.success, "{response:#?}");
@@ -373,9 +489,73 @@ mod tests {
     async fn add_tv_to_watchlist() {
         let client = client();
         let response = AccountDetails::default()
-            .add_to_watchlist(&client, "tv", 1399)
+            .watchlist_add(&client, MediaType::Tv, 1399)
             .await
             .unwrap();
         assert!(response.success, "{response:#?}");
+    }
+
+    #[tokio::test]
+    async fn favorite_add_remove() {
+        let client = client();
+        let account = AccountDetails::default();
+        let response = account
+            .favorite_add(&client, MediaType::Movie, 11)
+            .await
+            .unwrap();
+        assert!(response.success, "{response:#?}");
+        let favorites = account
+            .favorites::<Movie>(&client, AccountQuery::default())
+            .await
+            .unwrap();
+        assert!(
+            favorites.results.iter().any(|movie| movie.id == 11),
+            "{favorites:#?}"
+        );
+        let response = account
+            .favorite_remove(&client, MediaType::Movie, 11)
+            .await
+            .unwrap();
+        assert!(response.success, "{response:#?}");
+        let favorites = account
+            .favorites::<Movie>(&client, AccountQuery::default())
+            .await
+            .unwrap();
+        assert!(
+            !favorites.results.iter().any(|movie| movie.id == 11),
+            "{favorites:#?}"
+        );
+    }
+
+    #[tokio::test]
+    async fn watchlist_add_remove() {
+        let client = client();
+        let account = AccountDetails::default();
+        let response = account
+            .watchlist_add(&client, MediaType::Movie, 11)
+            .await
+            .unwrap();
+        assert!(response.success, "{response:#?}");
+        let watchlist = account
+            .watchlist::<Movie>(&client, AccountQuery::default())
+            .await
+            .unwrap();
+        assert!(
+            watchlist.results.iter().any(|movie| movie.id == 11),
+            "{watchlist:#?}"
+        );
+        let response = account
+            .watchlist_remove(&client, MediaType::Movie, 11)
+            .await
+            .unwrap();
+        assert!(response.success, "{response:#?}");
+        let watchlist = account
+            .watchlist::<Movie>(&client, AccountQuery::default())
+            .await
+            .unwrap();
+        assert!(
+            !watchlist.results.iter().any(|movie| movie.id == 11),
+            "{watchlist:#?}"
+        );
     }
 }

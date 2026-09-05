@@ -115,6 +115,15 @@ pub struct Video {
     pub id: String,
 }
 
+/// Media type used by the TMDB API when multiple types of media are involved.
+#[derive(Debug, Clone, Copy, Deserialize, Serialize)]
+#[serde(rename_all = "lowercase")]
+pub enum MediaType {
+    Movie,
+    Tv,
+    Person,
+}
+
 #[derive(Debug, Default, Deserialize)]
 #[serde(default)]
 pub struct TmdbResponse {
