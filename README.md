@@ -13,282 +13,110 @@ This crate is updated to the latest API and includes new features, bug fixes, an
 
 ## Usage
 
-```rust
-use tmdb::model::*;
-use tmdb::themoviedb::*;
+The library is centered around `TmdbClient`, which is created from a bearer token and then used to call TMDB endpoints.
 
-fn main() {
-    let tmdb = TMDb { api_key: env!("TMDB_API_KEY"), language: "en" };
+```rust,no_run
+use tmdb::*;
 
-    let movies = tmdb.search()
-        .title("Interstellar")
-        .year(2014)
-        .execute()
-        .unwrap();
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let client = TmdbClient::from_token("dummy-token")?;
 
-    let id = movies.results[0].id;
+    let movies = client.search_simple::<Movie>("Inception").await?;
+    println!("First result: {}", movies.results[0].title);
 
-    let interstellar: Movie = tmdb.fetch()
-        .id(id)
-        .execute()
-        .unwrap();
+    let account = client.account_details().await?;
+    println!("Signed in as {}", account.username);
 
-    println!("{:#?}", interstellar);
+    let favorites = client
+        .account_favorites::<Movie>(&account, AccountQuery::default())
+        .await?;
+    println!("Favorite movies: {}", favorites.results.len());
+
+    let by_external_id = client
+        .find_by_external_id("tt0816692", ExternalSourceId::Imdb, None)
+        .await?;
+    println!("External ID lookup succeeded: {:?}", by_external_id);
+
+    Ok(())
 }
 ```
 
-## Actions
-
-Currently there are 3 actions available:
-
-* Searching
-* Fetching
-* Finding
-
 ### Searching
 
-You can search for movies by `title` and `year`.
+```rust,no_run
+use tmdb::*;
 
-```rust
-let page = tmdb.search()
-    .title("Bicentennial Man")
-    .year(1999)
-    .execute()
-    .unwrap();
-
-let movies = page.results;
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let client = TmdbClient::from_token("dummy-token")?;
+    let results = client.search_simple::<Movie>("Interstellar").await?;
+    println!("{} results found", results.total_results);
+    Ok(())
+}
 ```
 
-### Fetching
+### Account details and lists
 
-You can fetch a movie, when you know its ID. Then you get all the movie details.
+```rust,no_run
+use tmdb::*;
 
-```rust
-let movie = tmdb.fetch()
-    .id(157336)
-    .execute()
-    .unwrap();
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let client = TmdbClient::from_token("dummy-token")?;
+    let account = client.account_details().await?;
+    let favorites = client
+        .account_favorites::<Movie>(&account, AccountQuery::default())
+        .await?;
+    let watchlist = client
+        .account_watchlist::<Movie>(&account, AccountQuery::default())
+        .await?;
+
+    println!("favorites={}, watchlist={}", favorites.results.len(), watchlist.results.len());
+    Ok(())
+}
 ```
 
-When you don't have any movie ID, you can search for a movie and then easily fetch the full details.
+### Adding and removing ratings
 
-```rust
-let page = tmdb.search()
-   .title("Bicentennial Man")
-   .year(1999)
-   .execute()
-   .unwrap();
+```rust,no_run
+use tmdb::*;
 
-let movies = page.results;
-let movie = movies[0].fetch(&tmdb).unwrap();
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let client = TmdbClient::from_token("dummy-token")?;
+    client.rating_add_movie(550, 8.5).await?;
+    client.rating_delete_movie(550).await?;
+    Ok(())
+}
 ```
 
-Furthermore you can request some more data with the [append to response](https://developers.themoviedb.org/3/getting-started/append-to-response) feature.
+These methods are available on `TmdbClient` for movies, TV shows, and episodes:
 
-```rust
-let movie = tmdb.fetch()
-    .id(2277)
-    .append_videos()
-    .append_credits()
-    .execute()
-    .unwrap();
+```rust,no_run
+use tmdb::*;
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let client = TmdbClient::from_token("dummy-token")?;
+    client.rating_add_tv(1399, 9.0).await?;
+    client.rating_add_episode(1399, 1, 1, 8.5).await?;
+    Ok(())
+}
 ```
 
-### Finding
+### Finding by external ID
 
-[Finding](https://developers.themoviedb.org/3/find/find-by-id) a movie with an external ID is currently supported with IMDB IDs.
+```rust,no_run
+use tmdb::*;
 
-```rust
-let find_result = tmdb.find()
-    .imdb_id("tt0816692")
-    .execute()
-    .unwrap();
-
-let movies = find_result.movie_results;
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let client = TmdbClient::from_token("dummy-token")?;
+    let response = client
+        .find_by_external_id("tt0816692", ExternalSourceId::Imdb, None)
+        .await?;
+    println!("Find response: {:?}", response);
+    Ok(())
+}
 ```
-
-## API Coverage Checklist
-
-* [x] Account
-  * [x] Details
-  * [x] Add Favorite
-  * [x] Add to Watchlist
-  * [x] Favorite Movies
-  * [x] Favorite TV
-  * [x] Lists
-  * [x] Rated Movies
-  * [x] Rated TV
-  * [x] Rated TV Episodes
-  * [x] Watchlist Movies
-  * [x] Watchlist TV
-* [ ] Authentication
-  * [ ] Create Guest Session
-  * [ ] Create Request Token
-  * [ ] Create Session
-  * [ ] Create Session from V4 Token
-  * [ ] Create Session with Login
-  * [ ] Delete Session
-  * [ ] Validate Key
-* [ ] Certifications
-  * [ ] Movie Certifications
-  * [ ] TV Certifications
-* [ ] Changes
-  * [ ] Movie List
-  * [ ] People List
-  * [ ] TV List
-* [ ] Collections
-  * [ ] Details
-  * [ ] Images
-  * [ ] Translations
-* [ ] Companies
-  * [ ] Details
-  * [ ] Alternative Names
-  * [ ] Images
-* [ ] Configuration
-  * [ ] Details
-  * [ ] Countries
-  * [ ] Jobs
-  * [ ] Languages
-  * [ ] Primary Translations
-  * [ ] Timezones
-* [ ] Credits
-  * [ ] Details
-* [ ] Discover
-  * [ ] Movie
-  * [ ] TV
-* [x] Find
-  * [x] By ID
-* [ ] Genres
-  * [ ] Movie List
-  * [ ] TV List
-* [ ] Guest Sessions
-  * [ ] Rated Movies
-  * [ ] Rated TV
-  * [ ] Rated TV Episodes
-* [ ] Keywords
-  * [ ] Details
-  * [ ] Movies
-* [ ] Lists
-  * [ ] Add Movie
-  * [ ] Check Item Status
-  * [ ] Clear
-  * [ ] Create
-  * [ ] Delete
-  * [ ] Remove Movie
-* [ ] Movie Lists
-  * [ ] Now Playing
-  * [ ] Popular
-  * [ ] Top Rated
-  * [ ] Upcoming
-* [ ] Movies
-  * [ ] Details
-  * [ ] Account States
-  * [ ] Alternative Titles
-  * [ ] Changes
-  * [ ] Credits
-  * [ ] External IDs
-  * [ ] Images
-  * [ ] Keywords
-  * [ ] Latest
-  * [ ] Lists
-  * [ ] Recommendations
-  * [ ] Release Dates
-  * [ ] Reviews
-  * [ ] Similar
-  * [ ] Translations
-  * [ ] Videos
-  * [ ] Watch Providers
-  * [x] Add Rating
-  * [x] Delete Rating
-* [ ] Networks
-  * [ ] Details
-  * [ ] Alternative Names
-  * [ ] Images
-* [ ] People Lists
-  * [ ] Popular
-* [ ] People
-  * [ ] Details
-  * [ ] Changes
-  * [ ] Combined Credits
-  * [ ] External IDs
-  * [ ] Images
-  * [ ] Latest
-  * [ ] Movie Credits
-  * [ ] TV Credits
-  * [ ] Tagged Images
-  * [ ] Translations
-* [ ] Reviews
-  * [ ] Details
-* [x] Search
-  * [x] Collection
-  * [x] Company
-  * [x] Keyword
-  * [x] Movie
-  * [x] Multi
-  * [x] Person
-  * [x] TV
-* [ ] Trending
-  * [ ] All
-  * [ ] Movies
-  * [ ] People
-  * [ ] TV
-* [ ] TV Series Lists
-  * [ ] Airing Today
-  * [ ] On The Air
-  * [ ] Popular
-  * [ ] Top Rated
-* [ ] TV Series
-  * [ ] Details
-  * [ ] Account States
-  * [ ] Aggregate Credits
-  * [ ] Alternative Titles
-  * [ ] Changes
-  * [ ] Content Ratings
-  * [ ] Credits
-  * [ ] Episode Groups
-  * [ ] External IDs
-  * [ ] Images
-  * [ ] Keywords
-  * [ ] Latest
-  * [ ] Lists
-  * [ ] Recommendations
-  * [ ] Reviews
-  * [ ] Screened Theatrically
-  * [ ] Similar
-  * [ ] Translations
-  * [ ] Videos
-  * [ ] Watch Providers
-  * [x] Add Rating
-  * [x] Delete Rating
-* [ ] TV Seasons
-  * [ ] Details
-  * [ ] Account States
-  * [ ] Aggregate Credits
-  * [ ] Changes
-  * [ ] Credits
-  * [ ] External IDs
-  * [ ] Images
-  * [ ] Translations
-  * [ ] Videos
-  * [ ] Watch Providers
-* [ ] TV Episodes
-  * [ ] Details
-  * [ ] Account States
-  * [ ] Changes
-  * [ ] Credits
-  * [ ] External IDs
-  * [ ] Images
-  * [ ] Translations
-  * [ ] Videos
-  * [x] Add Rating
-  * [x] Delete Rating
-* [ ] TV Episode Groups
-  * [ ] Details
-* [ ] Watch Providers
-  * [ ] Available Regions
-  * [ ] Movie Providers
-  * [ ] TV Providers
-
-## Acknowledgements
-
-* [The Movie Database (TMDb)](https://www.themoviedb.org/)

@@ -1,3 +1,5 @@
+#![doc = include_str!("../README.md")]
+
 use reqwest::header::{AUTHORIZATION, HeaderMap, HeaderValue};
 
 mod models;

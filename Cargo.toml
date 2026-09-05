@@ -28,7 +28,7 @@ serde_repr = "0.1.21"
 
 [dev-dependencies]
 dotenvy = { version = "0.15.7" }
-tokio = { version = "1.53.1", features = ["test-util", "macros"] }
+tokio = { version = "1.53.1", features = ["test-util", "macros", "rt-multi-thread"] }
 
 [features]
 default = []
