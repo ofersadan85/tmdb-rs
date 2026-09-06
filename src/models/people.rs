@@ -30,3 +30,20 @@ pub struct Person {
     pub profile_path: Option<String>,
     pub known_for: Vec<crate::MultiMedia>,
 }
+
+impl Person {
+    /// Retrieves the details of a person by their ID.
+    #[doc = crate::tmdb_api_error_docs!()]
+    pub async fn details(
+        client: &crate::TmdbClient,
+        id: u64,
+        language: Option<&str>,
+    ) -> Result<Self, reqwest::Error> {
+        let url = format!("{}/person/{id}", client.base_url);
+        let mut req = client.client.get(&url);
+        if let Some(language) = language {
+            req = req.query(&[("language", language)]);
+        }
+        req.send().await?.json().await
+    }
+}

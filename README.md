@@ -154,10 +154,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
   * [x] Details
   * [ ] Images
   * [ ] Translations
-* [ ] Companies
-  * [ ] Details
-  * [ ] Alternative Names
-  * [ ] Images
+* [x] Companies
+  * [x] Details
+  * [x] Alternative Names
+  * [x] Images
 * [ ] Configuration
   * [ ] Details
   * [ ] Countries
@@ -214,14 +214,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
   * [ ] Watch Providers
   * [x] Add Rating
   * [x] Delete Rating
-* [ ] Networks
-  * [ ] Details
-  * [ ] Alternative Names
-  * [ ] Images
+* [x] Networks
+  * [x] Details
+  * [x] Alternative Names
+  * [x] Images
 * [ ] People Lists
   * [ ] Popular
 * [ ] People
-  * [ ] Details
+  * [x] Details
   * [ ] Changes
   * [ ] Combined Credits
   * [ ] External IDs

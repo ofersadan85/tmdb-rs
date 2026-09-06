@@ -90,10 +90,7 @@ impl crate::TmdbClient {
     /// Adds a rating for a movie.
     ///
     /// Rating value must be a multiple of 0.5 between 0.5 and 10.0
-    ///
-    /// # Errors
-    ///
-    /// Returns [`reqwest::Error`] if the request fails.
+    #[doc = crate::tmdb_api_error_docs!()]
     pub async fn rating_add_movie(
         &self,
         id: u64,
@@ -108,10 +105,7 @@ impl crate::TmdbClient {
     }
 
     /// Removes a rating for a movie.
-    ///
-    /// # Errors
-    ///
-    /// Returns [`reqwest::Error`] if the request fails.
+    #[doc = crate::tmdb_api_error_docs!()]
     pub async fn rating_delete_movie(
         &self,
         id: u64,
@@ -127,10 +121,7 @@ impl crate::TmdbClient {
     /// Adds a rating for a TV show.
     ///
     /// Rating value must be a multiple of 0.5 between 0.5 and 10.0
-    ///
-    /// # Errors
-    ///
-    /// Returns [`reqwest::Error`] if the request fails.
+    #[doc = crate::tmdb_api_error_docs!()]
     pub async fn rating_add_tv(
         &self,
         id: u64,
@@ -145,10 +136,7 @@ impl crate::TmdbClient {
     }
 
     /// Removes a rating for a TV show.
-    ///
-    /// # Errors
-    ///
-    /// Returns [`reqwest::Error`] if the request fails.
+    #[doc = crate::tmdb_api_error_docs!()]
     pub async fn rating_delete_tv(&self, id: u64) -> Result<super::TmdbResponse, reqwest::Error> {
         super::Tv {
             id,
@@ -161,10 +149,7 @@ impl crate::TmdbClient {
     /// Adds a rating for an episode.
     ///
     /// Rating value must be a multiple of 0.5 between 0.5 and 10.0
-    ///
-    /// # Errors
-    ///
-    /// Returns [`reqwest::Error`] if the request fails.
+    #[doc = crate::tmdb_api_error_docs!()]
     pub async fn rating_add_episode(
         &self,
         show_id: u64,
@@ -183,10 +168,7 @@ impl crate::TmdbClient {
     }
 
     /// Removes a rating for an episode.
-    ///
-    /// # Errors
-    ///
-    /// Returns [`reqwest::Error`] if the request fails.
+    #[doc = crate::tmdb_api_error_docs!()]
     pub async fn rating_delete_episode(
         &self,
         show_id: u64,

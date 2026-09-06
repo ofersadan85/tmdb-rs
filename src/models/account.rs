@@ -144,10 +144,7 @@ pub trait OnNonRatedAccountLists: OnAccountLists {
     fn get_id(&self) -> u64;
 
     /// Sets the favorite status for the TV show on the account.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the request to the TMDB API fails.
+    #[doc = crate::tmdb_api_error_docs!()]
     async fn set_favorite(
         &self,
         client: &crate::TmdbClient,
@@ -166,10 +163,7 @@ pub trait OnNonRatedAccountLists: OnAccountLists {
     }
 
     /// Sets the watchlist status for the TV show on the account.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the request to the TMDB API fails.
+    #[doc = crate::tmdb_api_error_docs!()]
     async fn set_watchlist(
         &self,
         client: &crate::TmdbClient,
@@ -226,10 +220,7 @@ impl AccountDetails {
     ///
     /// This will always return the calling user's details.
     /// Use [`Self::get_with_session`] to retrieve account details for a specific session.
-    ///
-    /// # Errors
-    ///
-    /// Returns [`reqwest::Error`] if the request to the TMDB API fails.
+    #[doc = crate::tmdb_api_error_docs!()]
     pub async fn get(client: &crate::TmdbClient) -> Result<Self, reqwest::Error> {
         Self::get_with_session(client, 0, None).await
     }
@@ -239,10 +230,7 @@ impl AccountDetails {
     /// Calling this function with [`None`] as a session ID is equivalent to using
     /// [`Self::get`] and will only return the calling user's details, regardless
     /// of the provided account ID.
-    ///
-    /// # Errors
-    ///
-    /// Returns [`reqwest::Error`] if the request to the TMDB API fails.
+    #[doc = crate::tmdb_api_error_docs!()]
     pub async fn get_with_session(
         client: &crate::TmdbClient,
         id: u64,
@@ -287,10 +275,7 @@ impl AccountDetails {
     }
 
     /// Retrieves a [`SearchResults`] for the account's favorites list.
-    ///
-    /// # Errors
-    ///
-    /// Returns [`reqwest::Error`] if the request to the TMDB API fails.
+    #[doc = crate::tmdb_api_error_docs!()]
     pub async fn favorites<T>(
         &self,
         client: &crate::TmdbClient,
@@ -304,10 +289,7 @@ impl AccountDetails {
     }
 
     /// Retrieves a [`SearchResults`] for the account's rated list.
-    ///
-    /// # Errors
-    ///
-    /// Returns [`reqwest::Error`] if the request to the TMDB API fails.
+    #[doc = crate::tmdb_api_error_docs!()]
     pub async fn rated<T>(
         &self,
         client: &crate::TmdbClient,
@@ -321,10 +303,7 @@ impl AccountDetails {
     }
 
     /// Retrieves a [`SearchResults`] for the account's watchlist.
-    ///
-    /// # Errors
-    ///
-    /// Returns [`reqwest::Error`] if the request to the TMDB API fails.
+    #[doc = crate::tmdb_api_error_docs!()]
     pub async fn watchlist<T>(
         &self,
         client: &crate::TmdbClient,
@@ -367,10 +346,7 @@ impl AccountDetails {
     }
 
     /// Adds an item to the account favorites.
-    ///
-    /// # Errors
-    ///
-    /// Returns [`reqwest::Error`] if the request to the TMDB API fails.
+    #[doc = crate::tmdb_api_error_docs!()]
     pub async fn favorite_add(
         &self,
         client: &crate::TmdbClient,
@@ -388,10 +364,7 @@ impl AccountDetails {
     }
 
     /// Adds an item to the account watchlist.
-    ///
-    /// # Errors
-    ///
-    /// Returns [`reqwest::Error`] if the request to the TMDB API fails.
+    #[doc = crate::tmdb_api_error_docs!()]
     pub async fn watchlist_add(
         &self,
         client: &crate::TmdbClient,
@@ -409,10 +382,7 @@ impl AccountDetails {
     }
 
     /// Removes an item from the account favorites.
-    ///
-    /// # Errors
-    ///
-    /// Returns [`reqwest::Error`] if the request to the TMDB API fails.
+    #[doc = crate::tmdb_api_error_docs!()]
     pub async fn favorite_remove(
         &self,
         client: &crate::TmdbClient,
@@ -430,10 +400,7 @@ impl AccountDetails {
     }
 
     /// Removes an item from the account watchlist.
-    ///
-    /// # Errors
-    ///
-    /// Returns [`reqwest::Error`] if the request to the TMDB API fails.
+    #[doc = crate::tmdb_api_error_docs!()]
     pub async fn watchlist_remove(
         &self,
         client: &crate::TmdbClient,
@@ -451,10 +418,7 @@ impl AccountDetails {
     }
 
     /// Get the account's custom lists.
-    ///
-    /// # Errors
-    ///
-    /// Returns [`reqwest::Error`] if the request to the TMDB API fails.
+    #[doc = crate::tmdb_api_error_docs!()]
     pub async fn custom_lists(
         &self,
         client: &crate::TmdbClient,
@@ -475,19 +439,13 @@ impl AccountDetails {
 
 impl crate::TmdbClient {
     /// See documentation for [`AccountDetails::get`].
-    ///
-    /// # Errors
-    ///
-    /// Returns [`reqwest::Error`] if the request to the TMDB API fails.
+    #[doc = crate::tmdb_api_error_docs!()]
     pub async fn account_details(&self) -> Result<AccountDetails, reqwest::Error> {
         AccountDetails::get(self).await
     }
 
     /// See documentation for [`AccountDetails::custom_lists`].
-    ///
-    /// # Errors
-    ///
-    /// Returns [`reqwest::Error`] if the request to the TMDB API fails.
+    #[doc = crate::tmdb_api_error_docs!()]
     pub async fn account_custom_lists(
         &self,
         account: &AccountDetails,
@@ -497,10 +455,7 @@ impl crate::TmdbClient {
     }
 
     /// See documentation for [`AccountDetails::favorites`].
-    ///
-    /// # Errors
-    ///
-    /// Returns [`reqwest::Error`] if the request to the TMDB API fails.
+    #[doc = crate::tmdb_api_error_docs!()]
     pub async fn account_favorites<T>(
         &self,
         account: &AccountDetails,
@@ -513,10 +468,7 @@ impl crate::TmdbClient {
     }
 
     /// See documentation for [`AccountDetails::favorite_add`].
-    ///
-    /// # Errors
-    ///
-    /// Returns [`reqwest::Error`] if the request to the TMDB API fails.
+    #[doc = crate::tmdb_api_error_docs!()]
     pub async fn account_favorite_add(
         &self,
         account: &AccountDetails,
@@ -527,10 +479,7 @@ impl crate::TmdbClient {
     }
 
     /// See documentation for [`AccountDetails::favorite_remove`].
-    ///
-    /// # Errors
-    ///
-    /// Returns [`reqwest::Error`] if the request to the TMDB API fails.
+    #[doc = crate::tmdb_api_error_docs!()]
     pub async fn account_favorite_remove(
         &self,
         account: &AccountDetails,
@@ -541,10 +490,7 @@ impl crate::TmdbClient {
     }
 
     /// See documentation for [`AccountDetails::rated`].
-    ///
-    /// # Errors
-    ///
-    /// Returns [`reqwest::Error`] if the request to the TMDB API fails.
+    #[doc = crate::tmdb_api_error_docs!()]
     pub async fn account_rated<T>(
         &self,
         account: &AccountDetails,
@@ -557,10 +503,7 @@ impl crate::TmdbClient {
     }
 
     /// See documentation for [`AccountDetails::watchlist`].
-    ///
-    /// # Errors
-    ///
-    /// Returns [`reqwest::Error`] if the request to the TMDB API fails.
+    #[doc = crate::tmdb_api_error_docs!()]
     pub async fn account_watchlist<T>(
         &self,
         account: &AccountDetails,
@@ -573,10 +516,7 @@ impl crate::TmdbClient {
     }
 
     /// See documentation for [`AccountDetails::watchlist_add`].
-    ///
-    /// # Errors
-    ///
-    /// Returns [`reqwest::Error`] if the request to the TMDB API fails.
+    #[doc = crate::tmdb_api_error_docs!()]
     pub async fn account_watchlist_add<T>(
         &self,
         account: &AccountDetails,
@@ -587,10 +527,7 @@ impl crate::TmdbClient {
     }
 
     /// See documentation for [`AccountDetails::watchlist_remove`].
-    ///
-    /// # Errors
-    ///
-    /// Returns [`reqwest::Error`] if the request to the TMDB API fails.
+    #[doc = crate::tmdb_api_error_docs!()]
     pub async fn account_watchlist_remove(
         &self,
         account: &AccountDetails,

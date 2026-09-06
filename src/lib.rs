@@ -5,6 +5,13 @@ use reqwest::header::{AUTHORIZATION, HeaderMap, HeaderValue};
 mod models;
 pub use models::*;
 
+#[macro_export]
+macro_rules! tmdb_api_error_docs {
+    () => {
+        "\n# Errors\n\nReturns an error if the request to the TMDB API fails."
+    };
+}
+
 /// Error type for TMDB client operations.
 #[derive(Debug, thiserror::Error)]
 pub enum Error {

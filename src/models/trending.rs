@@ -61,10 +61,7 @@ impl Trending for Person {
 
 impl TmdbClient {
     /// Fetches the trending items for the specified type and time window.
-    /// 
-    /// # Errors
-    ///
-    /// Returns [`reqwest::Error`] if the request fails.
+    #[doc = crate::tmdb_api_error_docs!()]
     pub async fn trending<T: Trending + Send>(
         &self,
         time_window: TimeWindow,

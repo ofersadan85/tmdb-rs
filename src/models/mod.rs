@@ -12,6 +12,8 @@ mod certifications;
 mod changes;
 mod collections;
 pub use collections::Collection;
+mod companies;
+pub use companies::{Company, Network};
 #[expect(dead_code)]
 mod discover;
 mod lists;
@@ -32,7 +34,7 @@ mod session;
 mod translations;
 mod trending;
 mod tv;
-pub use tv::{Episode, Season, Tv};
+pub use tv::{Episode, Season, Series, Tv};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Genre {
@@ -72,20 +74,6 @@ pub struct Language {
 pub struct Keyword {
     pub id: u64,
     pub name: String,
-}
-
-#[derive(Debug, Default, Deserialize, Serialize)]
-#[serde(default)]
-pub struct Company {
-    pub description: Option<String>,
-    pub headquarters: Option<String>,
-    pub homepage: Option<String>,
-    pub id: u32,
-    pub logo_path: Option<String>,
-    pub name: String,
-    pub origin_country: Option<String>,
-    #[serde(rename = "parent_company")]
-    pub parent: Option<Box<Self>>,
 }
 
 /// A video entry attached through the append-to-response pattern.

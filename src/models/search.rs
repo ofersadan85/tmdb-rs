@@ -316,11 +316,7 @@ impl crate::TmdbClient {
     /// # Returns
     ///
     /// A [`FindResponse`] containing the search results.
-    ///
-    /// # Errors
-    ///
-    /// Returns [`reqwest::Error`] if the request to the TMDB API fails
-    /// or if the response cannot be deserialized.
+    #[doc = crate::tmdb_api_error_docs!()]
     pub async fn find_by_external_id(
         &self,
         external_id: &str,
@@ -340,11 +336,7 @@ impl crate::TmdbClient {
 
     /// Searches for items using the specified search query parameters.
     /// Returns a [`SearchResults`] containing the search results.
-    ///
-    /// # Errors
-    ///
-    /// Returns [`reqwest::Error`] if the request to the TMDB API fails
-    /// or if the response cannot be deserialized.
+    #[doc = crate::tmdb_api_error_docs!()]
     pub async fn search<T>(
         &self,
         params: T::Query,
@@ -357,11 +349,7 @@ impl crate::TmdbClient {
 
     /// Searches for items using a simple query string.
     /// Returns a [`SearchResults`] containing the search results.
-    ///
-    /// # Errors
-    ///
-    /// Returns [`reqwest::Error`] if the request to the TMDB API fails
-    /// or if the response cannot be deserialized.
+    #[doc = crate::tmdb_api_error_docs!()]
     pub async fn search_simple<T>(
         &self,
         query: impl Into<String>,

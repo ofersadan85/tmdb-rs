@@ -15,8 +15,9 @@ pub struct Collection {
 }
 
 impl Collection {
+    /// Retrieves the details of a collection by its ID.
+    #[doc = crate::tmdb_api_error_docs!()]
     pub async fn details(
-        &self,
         client: &crate::TmdbClient,
         id: u64,
         language: Option<&str>,
