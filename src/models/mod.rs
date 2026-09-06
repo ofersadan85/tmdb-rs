@@ -23,7 +23,7 @@ pub use rating::Rating;
 #[expect(dead_code)]
 mod reviews;
 mod search;
-pub use search::{ExternalSourceId, FindResponse, MultiSearch, SearchResults, Searchable};
+pub use search::{ExternalSourceId, FindResponse, MultiMedia, SearchResults, Searchable};
 #[expect(dead_code)]
 mod session;
 #[expect(dead_code)]

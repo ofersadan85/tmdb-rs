@@ -7,7 +7,7 @@ pub struct ListInfo {
     pub description: String,
     pub favorite_count: u64,
     pub id: String,
-    pub items: Vec<super::search::MultiSearch>,
+    pub items: Vec<super::search::MultiMedia>,
     pub item_count: u64,
     #[serde(rename = "iso_639_1")]
     pub language: String,

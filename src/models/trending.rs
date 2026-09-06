@@ -1,6 +1,6 @@
 use core::time;
 
-use crate::{Movie, MultiSearch, Person, SearchResults, TmdbClient, Tv};
+use crate::{Movie, MultiMedia, Person, SearchResults, TmdbClient, Tv};
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 
 /// Time window supported by the Trending endpoints.
@@ -43,7 +43,7 @@ pub trait Trending: Sized + DeserializeOwned {
     }
 }
 
-impl Trending for MultiSearch {
+impl Trending for MultiMedia {
     const TRENDING_ENDPOINT: &'static str = "all";
 }
 
@@ -96,7 +96,7 @@ mod tests {
 
     #[tokio::test]
     async fn all() {
-        inner::<MultiSearch>().await;
+        inner::<MultiMedia>().await;
     }
 
     #[tokio::test]

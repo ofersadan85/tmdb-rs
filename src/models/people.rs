@@ -28,5 +28,5 @@ pub struct Person {
     pub place_of_birth: Option<String>,
     pub popularity: f64,
     pub profile_path: Option<String>,
-    pub known_for: Vec<crate::MultiSearch>,
+    pub known_for: Vec<crate::MultiMedia>,
 }

@@ -200,7 +200,7 @@ impl Searchable for Movie {
     const SEARCH_PATH: &'static str = "search/movie";
 }
 
-impl Searchable for MultiSearch {
+impl Searchable for MultiMedia {
     type Query = SearchQueryMulti;
     const SEARCH_PATH: &'static str = "search/multi";
 }
@@ -258,7 +258,7 @@ where
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(tag = "media_type", rename_all = "snake_case")]
 #[expect(clippy::large_enum_variant)]
-pub enum MultiSearch {
+pub enum MultiMedia {
     Collection(Collection),
     Company(Company),
     Keyword(Keyword),
@@ -461,7 +461,7 @@ mod tests {
     #[tokio::test]
     async fn multi() {
         let response = client()
-            .search_simple::<MultiSearch>("Avatar")
+            .search_simple::<MultiMedia>("Avatar")
             .await
             .unwrap();
 
