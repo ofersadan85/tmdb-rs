@@ -10,6 +10,8 @@ mod auth;
 mod certifications;
 #[expect(dead_code)]
 mod changes;
+mod collections;
+pub use collections::Collection;
 #[expect(dead_code)]
 mod discover;
 mod lists;
@@ -84,16 +86,6 @@ pub struct Company {
     pub origin_country: Option<String>,
     #[serde(rename = "parent_company")]
     pub parent: Option<Box<Self>>,
-}
-
-#[derive(Debug, Default, Deserialize, Serialize)]
-#[serde(default)]
-pub struct Collection {
-    pub id: u64,
-    pub name: String,
-    pub overview: String,
-    pub poster_path: Option<String>,
-    pub backdrop_path: Option<String>,
 }
 
 /// A video entry attached through the append-to-response pattern.

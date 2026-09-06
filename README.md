@@ -151,7 +151,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
   * [ ] People List
   * [ ] TV List
 * [ ] Collections
-  * [ ] Details
+  * [x] Details
   * [ ] Images
   * [ ] Translations
 * [ ] Companies
