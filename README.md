@@ -120,3 +120,185 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 ```
+
+## API Coverage Checklist
+
+* [x] Account
+  * [x] Details
+  * [x] Add Favorite
+  * [x] Add to Watchlist
+  * [x] Favorite Movies
+  * [x] Favorite TV
+  * [x] Lists
+  * [x] Rated Movies
+  * [x] Rated TV
+  * [x] Rated TV Episodes
+  * [x] Watchlist Movies
+  * [x] Watchlist TV
+* [ ] Authentication
+  * [ ] Create Guest Session
+  * [ ] Create Request Token
+  * [ ] Create Session
+  * [ ] Create Session from V4 Token
+  * [ ] Create Session with Login
+  * [ ] Delete Session
+  * [ ] Validate Key
+* [ ] Certifications
+  * [ ] Movie Certifications
+  * [ ] TV Certifications
+* [ ] Changes
+  * [ ] Movie List
+  * [ ] People List
+  * [ ] TV List
+* [ ] Collections
+  * [ ] Details
+  * [ ] Images
+  * [ ] Translations
+* [ ] Companies
+  * [ ] Details
+  * [ ] Alternative Names
+  * [ ] Images
+* [ ] Configuration
+  * [ ] Details
+  * [ ] Countries
+  * [ ] Jobs
+  * [ ] Languages
+  * [ ] Primary Translations
+  * [ ] Timezones
+* [ ] Credits
+  * [ ] Details
+* [ ] Discover
+  * [ ] Movie
+  * [ ] TV
+* [x] Find
+  * [x] By ID
+* [ ] Genres
+  * [ ] Movie List
+  * [ ] TV List
+* [ ] Guest Sessions
+  * [ ] Rated Movies
+  * [ ] Rated TV
+  * [ ] Rated TV Episodes
+* [ ] Keywords
+  * [ ] Details
+  * [ ] Movies
+* [ ] Lists
+  * [ ] Add Movie
+  * [ ] Check Item Status
+  * [ ] Clear
+  * [ ] Create
+  * [ ] Delete
+  * [ ] Remove Movie
+* [ ] Movie Lists
+  * [ ] Now Playing
+  * [ ] Popular
+  * [ ] Top Rated
+  * [ ] Upcoming
+* [ ] Movies
+  * [ ] Details
+  * [ ] Account States
+  * [ ] Alternative Titles
+  * [ ] Changes
+  * [ ] Credits
+  * [ ] External IDs
+  * [ ] Images
+  * [ ] Keywords
+  * [ ] Latest
+  * [ ] Lists
+  * [ ] Recommendations
+  * [ ] Release Dates
+  * [ ] Reviews
+  * [ ] Similar
+  * [ ] Translations
+  * [ ] Videos
+  * [ ] Watch Providers
+  * [x] Add Rating
+  * [x] Delete Rating
+* [ ] Networks
+  * [ ] Details
+  * [ ] Alternative Names
+  * [ ] Images
+* [ ] People Lists
+  * [ ] Popular
+* [ ] People
+  * [ ] Details
+  * [ ] Changes
+  * [ ] Combined Credits
+  * [ ] External IDs
+  * [ ] Images
+  * [ ] Latest
+  * [ ] Movie Credits
+  * [ ] TV Credits
+  * [ ] Tagged Images
+  * [ ] Translations
+* [ ] Reviews
+  * [ ] Details
+* [x] Search
+  * [x] Collection
+  * [x] Company
+  * [x] Keyword
+  * [x] Movie
+  * [x] Multi
+  * [x] Person
+  * [x] TV
+* [x] Trending
+  * [x] All
+  * [x] Movies
+  * [x] People
+  * [x] TV
+* [ ] TV Series Lists
+  * [ ] Airing Today
+  * [ ] On The Air
+  * [ ] Popular
+  * [ ] Top Rated
+* [ ] TV Series
+  * [ ] Details
+  * [ ] Account States
+  * [ ] Aggregate Credits
+  * [ ] Alternative Titles
+  * [ ] Changes
+  * [ ] Content Ratings
+  * [ ] Credits
+  * [ ] Episode Groups
+  * [ ] External IDs
+  * [ ] Images
+  * [ ] Keywords
+  * [ ] Latest
+  * [ ] Lists
+  * [ ] Recommendations
+  * [ ] Reviews
+  * [ ] Screened Theatrically
+  * [ ] Similar
+  * [ ] Translations
+  * [ ] Videos
+  * [ ] Watch Providers
+  * [x] Add Rating
+  * [x] Delete Rating
+* [ ] TV Seasons
+  * [ ] Details
+  * [ ] Account States
+  * [ ] Aggregate Credits
+  * [ ] Changes
+  * [ ] Credits
+  * [ ] External IDs
+  * [ ] Images
+  * [ ] Translations
+  * [ ] Videos
+  * [ ] Watch Providers
+* [ ] TV Episodes
+  * [ ] Details
+  * [ ] Account States
+  * [ ] Changes
+  * [ ] Credits
+  * [ ] External IDs
+  * [ ] Images
+  * [ ] Translations
+  * [ ] Videos
+  * [x] Add Rating
+  * [x] Delete Rating
+* [ ] TV Episode Groups
+  * [ ] Details
+* [ ] Watch Providers
+  * [ ] Available Regions
+  * [ ] Movie Providers
+  * [ ] TV Providers
